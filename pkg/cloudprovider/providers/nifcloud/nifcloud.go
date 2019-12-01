@@ -14,6 +14,7 @@ type Cloud struct {
 }
 
 func init() {
+	registerMetrics()
 	cloudprovider.RegisterCloudProvider(ProviderName, func(config io.Reader) (cloudprovider.Interface, error) {
 		return newNIFCLOUD()
 	})

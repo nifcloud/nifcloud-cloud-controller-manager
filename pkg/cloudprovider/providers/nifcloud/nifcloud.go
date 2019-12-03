@@ -30,19 +30,19 @@ func newNIFCLOUD() (cloudprovider.Interface, error) {
 func (c *Cloud) Initialize(clientBuilder cloudprovider.ControllerClientBuilder, stop <-chan struct{}) {
 }
 
-// LoadBalancer returns a balancer interface. Also returns true if the interface is supported, false otherwise.
+// LoadBalancer returns an implementation of LoadBalancer for NIFCLOUD
 func (c *Cloud) LoadBalancer() (cloudprovider.LoadBalancer, bool) {
 	return nil, false
 }
 
-// Instances returns an instances interface. Also returns true if the interface is supported, false otherwise.
+// Instances returns an implementation of Instances for NIFCLOUD
 func (c *Cloud) Instances() (cloudprovider.Instances, bool) {
-	return nil, false
+	return c, true
 }
 
-// Zones returns a zones interface. Also returns true if the interface is supported, false otherwise.
+// Zones returns an implementation of Zones for NIFCLOUD
 func (c *Cloud) Zones() (cloudprovider.Zones, bool) {
-	return nil, false
+	return c, true
 }
 
 // Clusters returns a clusters interface.  Also returns true if the interface is supported, false otherwise.
@@ -62,5 +62,5 @@ func (c *Cloud) ProviderName() string {
 
 // HasClusterID returns true if a ClusterID is required and set
 func (c *Cloud) HasClusterID() bool {
-	return false
+	return true
 }

@@ -1,7 +1,9 @@
 package nifcloud
 
 import (
+	"fmt"
 	"io"
+	"os"
 
 	cloudprovider "k8s.io/cloud-provider"
 )
@@ -11,6 +13,8 @@ const ProviderName = "nifcloud"
 
 // Cloud is an implementation of Interface, LoadBalancer and Instances for NIFCLOUD
 type Cloud struct {
+	client CloudAPIClient
+	region string
 }
 
 func init() {
@@ -21,7 +25,23 @@ func init() {
 }
 
 func newNIFCLOUD() (cloudprovider.Interface, error) {
-	return &Cloud{}, nil
+	accessKeyID := os.Getenv("NIFCLOUD_ACCESS_KEY_ID")
+	secretAccessKey := os.Getenv("NIFCLOUD_SECRET_ACCESS_KEY")
+	region := os.Getenv("NIFCLOUD_REGION")
+	if accessKeyID == "" {
+		return nil, fmt.Errorf(`environment variable "NIFCLOUD_ACCESS_KEY_ID" is required`)
+	}
+	if secretAccessKey == "" {
+		return nil, fmt.Errorf(`environment variable "NIFCLOUD_SECRET_ACCESS_KEY" is required`)
+	}
+	if region == "" {
+		return nil, fmt.Errorf(`environment variable "NIFCLOUD_REGION" is required`)
+	}
+
+	return &Cloud{
+		client: newNIFCLOUDAPIClient(accessKeyID, secretAccessKey, region),
+		region: region,
+	}, nil
 }
 
 // Initialize provides the cloud with a kubernetes client builder and may spawn goroutines

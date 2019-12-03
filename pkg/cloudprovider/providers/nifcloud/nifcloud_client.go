@@ -23,11 +23,31 @@ type Instance struct {
 	Zone             string
 }
 
+// LoadBalancer is load balancer detail
+type LoadBalancer struct {
+	Name                          string
+	VIP                           string
+	AccountingType                string
+	NetworkVolume                 int64
+	PolicyType                    string
+	BalancingType                 int64
+	BalancingTargets              []Instance
+	LoadBalancerPort              int64
+	InstancePort                  int64
+	HealthCheckTarget             string
+	HealthCheckInterval           int64
+	HealthCheckUnhealthyThreshold int64
+	Filter                        []string // only support fileter type: 1 (allow CIDRs)
+}
+
 // CloudAPIClient is interface
 type CloudAPIClient interface {
 	// Instance
 	DescribeInstancesByInstanceID(ctx context.Context, instanceIDs []string) ([]Instance, error)
 	DescribeInstancesByInstanceUniqueID(ctx context.Context, instanceUniqueIDs []string) ([]Instance, error)
+
+	// LoadBalancer
+	DescribeLoadBalancers(ctx context.Context, name string) ([]LoadBalancer, error)
 }
 
 type nifcloudAPIClient struct {
@@ -112,6 +132,70 @@ func (c *nifcloudAPIClient) DescribeInstancesByInstanceUniqueID(ctx context.Cont
 	return instances, nil
 }
 
+func (c *nifcloudAPIClient) DescribeLoadBalancers(ctx context.Context, name string) ([]LoadBalancer, error) {
+	req := c.client.DescribeLoadBalancersRequest(
+		&computing.DescribeLoadBalancersInput{
+			LoadBalancerNames: []computing.RequestLoadBalancerNamesStruct{
+				{
+					LoadBalancerName: nifcloud.String(
+						reduceLoadBalancerNameToMaxLength(name),
+					),
+				},
+			},
+		},
+	)
+	res, err := req.Send(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch load balancers info for %q: %v", name, err)
+	}
+
+	if len(res.LoadBalancerDescriptions) == 0 {
+		return nil, fmt.Errorf("cloud not find load balancer %q: %v", name, err)
+	}
+
+	// check actual load balancer name in description
+	// because LoadBalancerName was reduces due to name length limit
+	result := []LoadBalancer{}
+	for _, lbDesc := range res.LoadBalancerDescriptions {
+		if nifcloud.StringValue(lbDesc.Description) == name {
+			lb := LoadBalancer{
+				Name:                          nifcloud.StringValue(lbDesc.LoadBalancerName),
+				VIP:                           nifcloud.StringValue(lbDesc.DNSName),
+				AccountingType:                nifcloud.StringValue(lbDesc.AccountingType),
+				NetworkVolume:                 nifcloud.Int64Value(lbDesc.NetworkVolume),
+				PolicyType:                    nifcloud.StringValue(lbDesc.PolicyType),
+				BalancingType:                 nifcloud.Int64Value(lbDesc.ListenerDescriptions[0].Listener.BalancingType),
+				LoadBalancerPort:              nifcloud.Int64Value(lbDesc.ListenerDescriptions[0].Listener.LoadBalancerPort),
+				InstancePort:                  nifcloud.Int64Value(lbDesc.ListenerDescriptions[0].Listener.InstancePort),
+				HealthCheckTarget:             nifcloud.StringValue(lbDesc.HealthCheck.Target),
+				HealthCheckInterval:           nifcloud.Int64Value(lbDesc.HealthCheck.Interval),
+				HealthCheckUnhealthyThreshold: nifcloud.Int64Value(lbDesc.HealthCheck.UnhealthyThreshold),
+			}
+
+			balancingTargets := []Instance{}
+			for _, instance := range lbDesc.Instances {
+				balancingTargets = append(balancingTargets,
+					Instance{
+						InstanceID:       nifcloud.StringValue(instance.InstanceId),
+						InstanceUniqueID: nifcloud.StringValue(instance.InstanceUniqueId),
+					},
+				)
+			}
+			lb.BalancingTargets = balancingTargets
+
+			filters := []string{}
+			for _, filter := range lbDesc.Filter.IPAddresses {
+				filters = append(filters, nifcloud.StringValue(filter.IPAddress))
+			}
+			lb.Filter = filters
+
+			result = append(result, lb)
+		}
+	}
+
+	return result, nil
+}
+
 func handleNotFoundError(err error) error {
 	switch err.(type) {
 	case awserr.Error:
@@ -134,4 +218,8 @@ func checkReservationSet(rs []computing.ReservationSetItem) error {
 	}
 
 	return nil
+}
+
+func reduceLoadBalancerNameToMaxLength(name string) string {
+	return strings.Replace(name, "-", "", -1)[:maxLoadBalanacerNameLength]
 }

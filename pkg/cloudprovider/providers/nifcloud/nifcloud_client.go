@@ -67,7 +67,7 @@ type CloudAPIClient interface {
 	DeleteLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer) error
 	RegisterInstancesWithLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer, instances []Instance) error
 	DeregisterInstancesFromLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer, instances []Instance) error
-	SetFilterForLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer) error
+	SetFilterForLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer, filters []Filter) error
 }
 
 type nifcloudAPIClient struct {
@@ -228,7 +228,7 @@ func (c *nifcloudAPIClient) CreateLoadBalancer(ctx context.Context, loadBalancer
 		return c.RegisterInstancesWithLoadBalancer(ctx, loadBalancer, nil)
 	})
 	eg.Go(func() error {
-		return c.SetFilterForLoadBalancer(ctx, loadBalancer)
+		return c.SetFilterForLoadBalancer(ctx, loadBalancer, nil)
 	})
 
 	if err := eg.Wait(); err != nil {
@@ -297,7 +297,7 @@ func (c *nifcloudAPIClient) RegisterPortWithLoadBalancer(ctx context.Context, lo
 		return c.RegisterInstancesWithLoadBalancer(ctx, loadBalancer, nil)
 	})
 	eg.Go(func() error {
-		return c.SetFilterForLoadBalancer(ctx, loadBalancer)
+		return c.SetFilterForLoadBalancer(ctx, loadBalancer, nil)
 	})
 
 	if err := eg.Wait(); err != nil {
@@ -369,13 +369,21 @@ func (c *nifcloudAPIClient) ConfigureHealthCheck(ctx context.Context, loadBalanc
 	return nil
 }
 
-func (c *nifcloudAPIClient) SetFilterForLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer) error {
+func (c *nifcloudAPIClient) SetFilterForLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer, filters []Filter) error {
 	if loadBalancer == nil {
 		return fmt.Errorf("loadBalancer is nil")
 	}
 
+	if filters == nil {
+		// if filters is nil, authorize all of LoadBalancer.Filters
+		filters = loadBalancer.Filters
+		for _, f := range filters {
+			f.AddOnFilter = true
+		}
+	}
+
 	ipAddresses := []computing.RequestIPAddressesStruct{}
-	for _, filter := range loadBalancer.Filters {
+	for _, filter := range filters {
 		// Skip wildcard
 		if filter.IPAddress == filterAnyIPAddresses {
 			continue

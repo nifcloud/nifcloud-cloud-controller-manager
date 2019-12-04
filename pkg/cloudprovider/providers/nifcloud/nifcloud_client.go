@@ -65,7 +65,7 @@ type CloudAPIClient interface {
 	CreateLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer) (string, error)
 	RegisterPortWithLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer) error
 	DeleteLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer) error
-	RegisterInstancesWithLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer) error
+	RegisterInstancesWithLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer, instances []Instance) error
 	SetFilterForLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer) error
 }
 
@@ -224,7 +224,7 @@ func (c *nifcloudAPIClient) CreateLoadBalancer(ctx context.Context, loadBalancer
 		return c.ConfigureHealthCheck(ctx, loadBalancer)
 	})
 	eg.Go(func() error {
-		return c.RegisterInstancesWithLoadBalancer(ctx, loadBalancer)
+		return c.RegisterInstancesWithLoadBalancer(ctx, loadBalancer, nil)
 	})
 	eg.Go(func() error {
 		return c.SetFilterForLoadBalancer(ctx, loadBalancer)
@@ -293,7 +293,7 @@ func (c *nifcloudAPIClient) RegisterPortWithLoadBalancer(ctx context.Context, lo
 		return c.ConfigureHealthCheck(ctx, loadBalancer)
 	})
 	eg.Go(func() error {
-		return c.RegisterInstancesWithLoadBalancer(ctx, loadBalancer)
+		return c.RegisterInstancesWithLoadBalancer(ctx, loadBalancer, nil)
 	})
 	eg.Go(func() error {
 		return c.SetFilterForLoadBalancer(ctx, loadBalancer)
@@ -406,23 +406,28 @@ func (c *nifcloudAPIClient) SetFilterForLoadBalancer(ctx context.Context, loadBa
 	return nil
 }
 
-func (c *nifcloudAPIClient) RegisterInstancesWithLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer) error {
+func (c *nifcloudAPIClient) RegisterInstancesWithLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer, instances []Instance) error {
 	if loadBalancer == nil {
 		return fmt.Errorf("loadBalancer is nil")
 	}
 
-	instances := []computing.RequestInstancesStruct{}
-	for _, instance := range loadBalancer.BalancingTargets {
-		instances = append(instances, computing.RequestInstancesStruct{
-			InstanceId: nifcloud.String(instance.InstanceID),
-		})
+	if instances == nil {
+		instances = loadBalancer.BalancingTargets
+	}
+
+	registerInstances := []computing.RequestInstancesStruct{}
+	for _, instance := range instances {
+		registerInstances = append(registerInstances,
+			computing.RequestInstancesStruct{
+				InstanceId: nifcloud.String(instance.InstanceID),
+			})
 	}
 	req := c.client.RegisterInstancesWithLoadBalancerRequest(
 		&computing.RegisterInstancesWithLoadBalancerInput{
 			LoadBalancerName: nifcloud.String(loadBalancer.Name),
 			LoadBalancerPort: nifcloud.Int64(loadBalancer.LoadBalancerPort),
 			InstancePort:     nifcloud.Int64(loadBalancer.InstancePort),
-			Instances:        instances,
+			Instances:        registerInstances,
 		},
 	)
 	_, err := req.Send(ctx)

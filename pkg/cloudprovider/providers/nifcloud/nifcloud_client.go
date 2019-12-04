@@ -64,6 +64,7 @@ type CloudAPIClient interface {
 	DescribeLoadBalancers(ctx context.Context, name string) ([]LoadBalancer, error)
 	CreateLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer) (string, error)
 	RegisterPortWithLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer) error
+	DeleteLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer) error
 }
 
 type nifcloudAPIClient struct {
@@ -398,6 +399,26 @@ func (c *nifcloudAPIClient) RegisterInstancesWithLoadBalancer(ctx context.Contex
 	if err != nil {
 		return fmt.Errorf(
 			"failed to register instances to load balancer %q (%d -> %d): %w",
+			loadBalancer.Name, loadBalancer.LoadBalancerPort,
+			loadBalancer.InstancePort, err,
+		)
+	}
+
+	return nil
+}
+
+func (c *nifcloudAPIClient) DeleteLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer) error {
+	req := c.client.DeleteLoadBalancerRequest(
+		&computing.DeleteLoadBalancerInput{
+			LoadBalancerName: nifcloud.String(loadBalancer.Name),
+			LoadBalancerPort: nifcloud.Int64(loadBalancer.LoadBalancerPort),
+			InstancePort:     nifcloud.Int64(loadBalancer.InstancePort),
+		},
+	)
+	_, err := req.Send(ctx)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to delete load balancer %q (%d -> %d): %w",
 			loadBalancer.Name, loadBalancer.LoadBalancerPort,
 			loadBalancer.InstancePort, err,
 		)

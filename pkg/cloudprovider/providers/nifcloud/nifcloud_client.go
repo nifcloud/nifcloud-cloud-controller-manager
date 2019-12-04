@@ -144,7 +144,7 @@ func (c *nifcloudAPIClient) DescribeInstancesByInstanceUniqueID(ctx context.Cont
 		return nil, fmt.Errorf("failed encoding request: %v", err)
 	}
 	for i, uniqueID := range instanceUniqueIDs {
-		body.Set(fmt.Sprintf("InstanceUniqueId.%d", i), uniqueID)
+		body.Set(fmt.Sprintf("InstanceUniqueId.%d", i+1), uniqueID)
 	}
 	req.SetBufferBody([]byte(body.Encode()))
 

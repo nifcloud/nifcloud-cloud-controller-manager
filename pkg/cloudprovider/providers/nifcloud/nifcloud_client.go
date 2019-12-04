@@ -62,8 +62,8 @@ type CloudAPIClient interface {
 
 	// LoadBalancer
 	DescribeLoadBalancers(ctx context.Context, name string) ([]LoadBalancer, error)
-	CreateLoadBalancer(ctx context.Context, loadBalancer LoadBalancer) (string, error)
-	RegisterPortWithLoadBalancer(ctx context.Context, loadBalancer LoadBalancer) error
+	CreateLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer) (string, error)
+	RegisterPortWithLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer) error
 }
 
 type nifcloudAPIClient struct {
@@ -206,7 +206,7 @@ func (c *nifcloudAPIClient) DescribeLoadBalancers(ctx context.Context, name stri
 	return result, nil
 }
 
-func (c *nifcloudAPIClient) CreateLoadBalancer(ctx context.Context, loadBalancer LoadBalancer) (string, error) {
+func (c *nifcloudAPIClient) CreateLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer) (string, error) {
 	vip, err := c.createLoadBalancer(ctx, loadBalancer)
 	if err != nil {
 		return "", err
@@ -234,7 +234,7 @@ func (c *nifcloudAPIClient) CreateLoadBalancer(ctx context.Context, loadBalancer
 	return vip, nil
 }
 
-func (c *nifcloudAPIClient) createLoadBalancer(ctx context.Context, loadBalancer LoadBalancer) (string, error) {
+func (c *nifcloudAPIClient) createLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer) (string, error) {
 	input := &computing.CreateLoadBalancerInput{
 		LoadBalancerName: nifcloud.String(loadBalancer.Name),
 		Listeners: []computing.RequestListenersStruct{
@@ -268,7 +268,7 @@ func (c *nifcloudAPIClient) createLoadBalancer(ctx context.Context, loadBalancer
 	return nifcloud.StringValue(res.DNSName), nil
 }
 
-func (c *nifcloudAPIClient) RegisterPortWithLoadBalancer(ctx context.Context, loadBalancer LoadBalancer) error {
+func (c *nifcloudAPIClient) RegisterPortWithLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer) error {
 	if err := c.registerPortWithLoadBalancer(ctx, loadBalancer); err != nil {
 		return err
 	}
@@ -295,7 +295,7 @@ func (c *nifcloudAPIClient) RegisterPortWithLoadBalancer(ctx context.Context, lo
 	return nil
 }
 
-func (c *nifcloudAPIClient) registerPortWithLoadBalancer(ctx context.Context, loadBalancer LoadBalancer) error {
+func (c *nifcloudAPIClient) registerPortWithLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer) error {
 	req := c.client.RegisterPortWithLoadBalancerRequest(
 		&computing.RegisterPortWithLoadBalancerInput{
 			LoadBalancerName: nifcloud.String(loadBalancer.Name),
@@ -320,7 +320,7 @@ func (c *nifcloudAPIClient) registerPortWithLoadBalancer(ctx context.Context, lo
 	return nil
 }
 
-func (c *nifcloudAPIClient) ConfigureHealthCheck(ctx context.Context, loadBalancer LoadBalancer) error {
+func (c *nifcloudAPIClient) ConfigureHealthCheck(ctx context.Context, loadBalancer *LoadBalancer) error {
 	req := c.client.ConfigureHealthCheckRequest(
 		&computing.ConfigureHealthCheckInput{
 			LoadBalancerName: nifcloud.String(loadBalancer.Name),
@@ -345,7 +345,7 @@ func (c *nifcloudAPIClient) ConfigureHealthCheck(ctx context.Context, loadBalanc
 	return nil
 }
 
-func (c *nifcloudAPIClient) SetFilterForLoadBalancer(ctx context.Context, loadBalancer LoadBalancer) error {
+func (c *nifcloudAPIClient) SetFilterForLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer) error {
 	ipAddresses := []computing.RequestIPAddressesStruct{}
 	for _, filter := range loadBalancer.Filters {
 		// Skip wildcard
@@ -379,7 +379,7 @@ func (c *nifcloudAPIClient) SetFilterForLoadBalancer(ctx context.Context, loadBa
 	return nil
 }
 
-func (c *nifcloudAPIClient) RegisterInstancesWithLoadBalancer(ctx context.Context, loadBalancer LoadBalancer) error {
+func (c *nifcloudAPIClient) RegisterInstancesWithLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer) error {
 	instances := []computing.RequestInstancesStruct{}
 	for _, instance := range loadBalancer.BalancingTargets {
 		instances = append(instances, computing.RequestInstancesStruct{

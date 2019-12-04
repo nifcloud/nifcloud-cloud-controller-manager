@@ -273,9 +273,11 @@ func (c *nifcloudAPIClient) createLoadBalancer(ctx context.Context, loadBalancer
 			{
 				LoadBalancerPort: nifcloud.Int64(loadBalancer.LoadBalancerPort),
 				InstancePort:     nifcloud.Int64(loadBalancer.InstancePort),
-				BalancingType:    nifcloud.Int64(loadBalancer.BalancingType),
 			},
 		},
+	}
+	if loadBalancer.BalancingType != 0 {
+		input.Listeners[0].BalancingType = nifcloud.Int64(loadBalancer.BalancingType)
 	}
 	if loadBalancer.AccountingType != "" {
 		input.AccountingType = nifcloud.String(loadBalancer.AccountingType)
@@ -336,18 +338,20 @@ func (c *nifcloudAPIClient) registerPortWithLoadBalancer(ctx context.Context, lo
 		return fmt.Errorf("loadBalancer is nil")
 	}
 
-	req := c.client.RegisterPortWithLoadBalancerRequest(
-		&computing.RegisterPortWithLoadBalancerInput{
-			LoadBalancerName: nifcloud.String(loadBalancer.Name),
-			Listeners: []computing.RequestListenersStruct{
-				{
-					LoadBalancerPort: nifcloud.Int64(loadBalancer.LoadBalancerPort),
-					InstancePort:     nifcloud.Int64(loadBalancer.InstancePort),
-					BalancingType:    nifcloud.Int64(loadBalancer.BalancingType),
-				},
+	input := &computing.RegisterPortWithLoadBalancerInput{
+		LoadBalancerName: nifcloud.String(loadBalancer.Name),
+		Listeners: []computing.RequestListenersStruct{
+			{
+				LoadBalancerPort: nifcloud.Int64(loadBalancer.LoadBalancerPort),
+				InstancePort:     nifcloud.Int64(loadBalancer.InstancePort),
 			},
 		},
-	)
+	}
+	if loadBalancer.BalancingType != 0 {
+		input.Listeners[0].BalancingType = nifcloud.Int64(loadBalancer.BalancingType)
+	}
+
+	req := c.client.RegisterPortWithLoadBalancerRequest(input)
 	_, err := req.Send(ctx)
 	if err != nil {
 		return fmt.Errorf(

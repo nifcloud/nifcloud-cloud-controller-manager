@@ -8,8 +8,8 @@ import (
 
 	"github.com/aokumasan/nifcloud-sdk-go-v2/nifcloud"
 	"github.com/aokumasan/nifcloud-sdk-go-v2/service/computing"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/private/protocol/query/queryutil"
+	"github.com/aws/aws-sdk-go-v2/aws/awserr"
+	"github.com/aws/aws-sdk-go-v2/private/protocol/query/queryutil"
 	"golang.org/x/sync/errgroup"
 	cloudprovider "k8s.io/cloud-provider"
 )

@@ -54,6 +54,26 @@ type Filter struct {
 	IPAddress   string
 }
 
+// Equals method checks whether specified instance is the same
+func (i *Instance) Equals(other Instance) bool {
+	if i.InstanceUniqueID != "" && other.InstanceUniqueID != "" {
+		return i.InstanceUniqueID == other.InstanceUniqueID
+	}
+	return i.InstanceID == other.InstanceID
+}
+
+// Equals method checks whether specified load balancer is the same
+func (lb *LoadBalancer) Equals(other LoadBalancer) bool {
+	return lb.Name == other.Name &&
+		lb.LoadBalancerPort == other.LoadBalancerPort &&
+		lb.InstancePort == other.LoadBalancerPort
+}
+
+// Equals method checks whether specified filter is the same
+func (f *Filter) Equals(other Filter) bool {
+	return f.IPAddress == other.IPAddress
+}
+
 // CloudAPIClient is interface
 type CloudAPIClient interface {
 	// Instance

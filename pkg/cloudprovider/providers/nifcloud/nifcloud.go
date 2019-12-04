@@ -52,7 +52,7 @@ func (c *Cloud) Initialize(clientBuilder cloudprovider.ControllerClientBuilder, 
 
 // LoadBalancer returns an implementation of LoadBalancer for NIFCLOUD
 func (c *Cloud) LoadBalancer() (cloudprovider.LoadBalancer, bool) {
-	return nil, false
+	return c, true
 }
 
 // Instances returns an implementation of Instances for NIFCLOUD

@@ -65,6 +65,8 @@ type CloudAPIClient interface {
 	CreateLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer) (string, error)
 	RegisterPortWithLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer) error
 	DeleteLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer) error
+	RegisterInstancesWithLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer) error
+	SetFilterForLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer) error
 }
 
 type nifcloudAPIClient struct {

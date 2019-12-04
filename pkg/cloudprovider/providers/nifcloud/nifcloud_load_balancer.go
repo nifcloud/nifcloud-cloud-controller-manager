@@ -246,12 +246,10 @@ func (c *Cloud) ensureLoadBalancer(ctx context.Context, desire []LoadBalancer) (
 				if i == 0 {
 					vip, err = c.client.CreateLoadBalancer(ctx, &lb)
 					if err != nil {
-						klog.Errorf("Failed to create load balancer: %v", err)
 						return nil, fmt.Errorf("failed to create load balancer: %w", err)
 					}
 				} else {
 					if err := c.client.RegisterPortWithLoadBalancer(ctx, &lb); err != nil {
-						klog.Errorf("Failed to add port to load balancer: %v", err)
 						return nil, fmt.Errorf("failed to add port to load balancer: %w", err)
 					}
 				}
@@ -260,7 +258,6 @@ func (c *Cloud) ensureLoadBalancer(ctx context.Context, desire []LoadBalancer) (
 			return toLoadBalancerStatus(vip), nil
 		}
 
-		klog.Errorf("Failed to describe load balancer: %v", err)
 		return nil, fmt.Errorf("failed to describe load balanacer %q: %w", loadBalancerName, err)
 	}
 
@@ -269,7 +266,6 @@ func (c *Cloud) ensureLoadBalancer(ctx context.Context, desire []LoadBalancer) (
 		for _, lb := range toCreate {
 			klog.Infof("Creating LoadBalancer %q (%d -> %d)", lb.Name, lb.LoadBalancerPort, lb.InstancePort)
 			if err := c.client.RegisterPortWithLoadBalancer(ctx, &lb); err != nil {
-				klog.Errorf("Failed to add port to load balancer: %v", err)
 				return nil, fmt.Errorf("failed to add port to load balancer: %w", err)
 			}
 		}
@@ -278,7 +274,6 @@ func (c *Cloud) ensureLoadBalancer(ctx context.Context, desire []LoadBalancer) (
 		for _, lb := range toDelete {
 			klog.Infof("Deleting LoadBalancer %q (%d -> %d)", lb.Name, lb.LoadBalancerPort, lb.InstancePort)
 			if err := c.client.DeleteLoadBalancer(ctx, &lb); err != nil {
-				klog.Errorf("Failed to delete load balancer: %v", err)
 				return nil, fmt.Errorf("failed to delete load balancer: %w", err)
 			}
 		}
@@ -287,7 +282,6 @@ func (c *Cloud) ensureLoadBalancer(ctx context.Context, desire []LoadBalancer) (
 	// fetch load balancers again to update latest load balancer info
 	current, err = c.client.DescribeLoadBalancers(ctx, loadBalancerName)
 	if err != nil {
-		klog.Errorf("Failed to describe load balancer: %v", err)
 		return nil, fmt.Errorf("failed to describe load balanacer %q: %w", loadBalancerName, err)
 	}
 
@@ -304,7 +298,6 @@ func (c *Cloud) ensureLoadBalancer(ctx context.Context, desire []LoadBalancer) (
 			currentLB.Name, currentLB.LoadBalancerPort, currentLB.InstancePort, toRegister,
 		)
 		if err := c.client.RegisterInstancesWithLoadBalancer(ctx, &currentLB, toRegister); err != nil {
-			klog.Errorf("Failed to register instances: %v", err)
 			return nil, fmt.Errorf("failed to register instances: %w", err)
 		}
 
@@ -314,7 +307,6 @@ func (c *Cloud) ensureLoadBalancer(ctx context.Context, desire []LoadBalancer) (
 			currentLB.Name, currentLB.LoadBalancerPort, currentLB.InstancePort, toRegister,
 		)
 		if err := c.client.DeregisterInstancesFromLoadBalancer(ctx, &currentLB, toDeregister); err != nil {
-			klog.Errorf("Failed to deregister instances: %v", err)
 			return nil, fmt.Errorf("failed to deregister instances: %w", err)
 		}
 
@@ -328,8 +320,8 @@ func (c *Cloud) ensureLoadBalancer(ctx context.Context, desire []LoadBalancer) (
 		for _, f := range toRevoke {
 			toSet = append(toSet, Filter{AddOnFilter: false, IPAddress: f.IPAddress})
 		}
+		klog.Infof("Applying filter: %v", toSet)
 		if err := c.client.SetFilterForLoadBalancer(ctx, &currentLB, toSet); err != nil {
-			klog.Errorf("Failed to set filter for load balancer: %v", err)
 			return nil, fmt.Errorf("failed to set filter for load balancer: %w", err)
 		}
 	}

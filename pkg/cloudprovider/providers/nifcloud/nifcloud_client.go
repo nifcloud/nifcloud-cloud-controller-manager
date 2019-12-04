@@ -37,7 +37,13 @@ type LoadBalancer struct {
 	HealthCheckTarget             string
 	HealthCheckInterval           int64
 	HealthCheckUnhealthyThreshold int64
-	Filter                        []string // only support fileter type: 1 (allow CIDRs)
+	Filters                       []Filter
+}
+
+// Filter is load balancer filter detail
+type Filter struct {
+	AddOnFilter bool
+	IPAddress   string
 }
 
 // CloudAPIClient is interface
@@ -137,9 +143,7 @@ func (c *nifcloudAPIClient) DescribeLoadBalancers(ctx context.Context, name stri
 		&computing.DescribeLoadBalancersInput{
 			LoadBalancerNames: []computing.RequestLoadBalancerNamesStruct{
 				{
-					LoadBalancerName: nifcloud.String(
-						reduceLoadBalancerNameToMaxLength(name),
-					),
+					LoadBalancerName: nifcloud.String(name),
 				},
 			},
 		},
@@ -153,44 +157,40 @@ func (c *nifcloudAPIClient) DescribeLoadBalancers(ctx context.Context, name stri
 		return nil, fmt.Errorf("cloud not find load balancer %q: %v", name, err)
 	}
 
-	// check actual load balancer name in description
-	// because LoadBalancerName was reduces due to name length limit
 	result := []LoadBalancer{}
 	for _, lbDesc := range res.LoadBalancerDescriptions {
-		if nifcloud.StringValue(lbDesc.Description) == name {
-			lb := LoadBalancer{
-				Name:                          nifcloud.StringValue(lbDesc.LoadBalancerName),
-				VIP:                           nifcloud.StringValue(lbDesc.DNSName),
-				AccountingType:                nifcloud.StringValue(lbDesc.AccountingType),
-				NetworkVolume:                 nifcloud.Int64Value(lbDesc.NetworkVolume),
-				PolicyType:                    nifcloud.StringValue(lbDesc.PolicyType),
-				BalancingType:                 nifcloud.Int64Value(lbDesc.ListenerDescriptions[0].Listener.BalancingType),
-				LoadBalancerPort:              nifcloud.Int64Value(lbDesc.ListenerDescriptions[0].Listener.LoadBalancerPort),
-				InstancePort:                  nifcloud.Int64Value(lbDesc.ListenerDescriptions[0].Listener.InstancePort),
-				HealthCheckTarget:             nifcloud.StringValue(lbDesc.HealthCheck.Target),
-				HealthCheckInterval:           nifcloud.Int64Value(lbDesc.HealthCheck.Interval),
-				HealthCheckUnhealthyThreshold: nifcloud.Int64Value(lbDesc.HealthCheck.UnhealthyThreshold),
-			}
-
-			balancingTargets := []Instance{}
-			for _, instance := range lbDesc.Instances {
-				balancingTargets = append(balancingTargets,
-					Instance{
-						InstanceID:       nifcloud.StringValue(instance.InstanceId),
-						InstanceUniqueID: nifcloud.StringValue(instance.InstanceUniqueId),
-					},
-				)
-			}
-			lb.BalancingTargets = balancingTargets
-
-			filters := []string{}
-			for _, filter := range lbDesc.Filter.IPAddresses {
-				filters = append(filters, nifcloud.StringValue(filter.IPAddress))
-			}
-			lb.Filter = filters
-
-			result = append(result, lb)
+		lb := LoadBalancer{
+			Name:                          nifcloud.StringValue(lbDesc.LoadBalancerName),
+			VIP:                           nifcloud.StringValue(lbDesc.DNSName),
+			AccountingType:                nifcloud.StringValue(lbDesc.AccountingType),
+			NetworkVolume:                 nifcloud.Int64Value(lbDesc.NetworkVolume),
+			PolicyType:                    nifcloud.StringValue(lbDesc.PolicyType),
+			BalancingType:                 nifcloud.Int64Value(lbDesc.ListenerDescriptions[0].Listener.BalancingType),
+			LoadBalancerPort:              nifcloud.Int64Value(lbDesc.ListenerDescriptions[0].Listener.LoadBalancerPort),
+			InstancePort:                  nifcloud.Int64Value(lbDesc.ListenerDescriptions[0].Listener.InstancePort),
+			HealthCheckTarget:             nifcloud.StringValue(lbDesc.HealthCheck.Target),
+			HealthCheckInterval:           nifcloud.Int64Value(lbDesc.HealthCheck.Interval),
+			HealthCheckUnhealthyThreshold: nifcloud.Int64Value(lbDesc.HealthCheck.UnhealthyThreshold),
 		}
+
+		balancingTargets := []Instance{}
+		for _, instance := range lbDesc.Instances {
+			balancingTargets = append(balancingTargets,
+				Instance{
+					InstanceID:       nifcloud.StringValue(instance.InstanceId),
+					InstanceUniqueID: nifcloud.StringValue(instance.InstanceUniqueId),
+				},
+			)
+		}
+		lb.BalancingTargets = balancingTargets
+
+		filters := []Filter{}
+		for _, filter := range lbDesc.Filter.IPAddresses {
+			filters = append(filters, Filter{IPAddress: nifcloud.StringValue(filter.IPAddress)})
+		}
+		lb.Filters = filters
+
+		result = append(result, lb)
 	}
 
 	return result, nil
@@ -218,8 +218,4 @@ func checkReservationSet(rs []computing.ReservationSetItem) error {
 	}
 
 	return nil
-}
-
-func reduceLoadBalancerNameToMaxLength(name string) string {
-	return strings.Replace(name, "-", "", -1)[:maxLoadBalanacerNameLength]
 }

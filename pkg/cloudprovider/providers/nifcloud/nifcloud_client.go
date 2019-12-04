@@ -10,7 +10,15 @@ import (
 	"github.com/aokumasan/nifcloud-sdk-go-v2/service/computing"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/private/protocol/query/queryutil"
+	"golang.org/x/sync/errgroup"
 	cloudprovider "k8s.io/cloud-provider"
+)
+
+const (
+	// only support filter type: 1 (allow CIDRs)
+	loadBalancerFilterType = "1"
+
+	filterAnyIPAddresses = "*.*.*.*"
 )
 
 // Instance is instance detail
@@ -54,6 +62,8 @@ type CloudAPIClient interface {
 
 	// LoadBalancer
 	DescribeLoadBalancers(ctx context.Context, name string) ([]LoadBalancer, error)
+	CreateLoadBalancer(ctx context.Context, loadBalancer LoadBalancer) (string, error)
+	RegisterPortWithLoadBalancer(ctx context.Context, loadBalancer LoadBalancer) error
 }
 
 type nifcloudAPIClient struct {
@@ -194,6 +204,206 @@ func (c *nifcloudAPIClient) DescribeLoadBalancers(ctx context.Context, name stri
 	}
 
 	return result, nil
+}
+
+func (c *nifcloudAPIClient) CreateLoadBalancer(ctx context.Context, loadBalancer LoadBalancer) (string, error) {
+	vip, err := c.createLoadBalancer(ctx, loadBalancer)
+	if err != nil {
+		return "", err
+	}
+
+	eg, ctx := errgroup.WithContext(ctx)
+	eg.Go(func() error {
+		return c.ConfigureHealthCheck(ctx, loadBalancer)
+	})
+	eg.Go(func() error {
+		return c.RegisterInstancesWithLoadBalancer(ctx, loadBalancer)
+	})
+	eg.Go(func() error {
+		return c.SetFilterForLoadBalancer(ctx, loadBalancer)
+	})
+
+	if err := eg.Wait(); err != nil {
+		return "", fmt.Errorf(
+			"failed to configure load balancer %q (%d -> %d): %w",
+			loadBalancer.Name, loadBalancer.LoadBalancerPort,
+			loadBalancer.InstancePort, err,
+		)
+	}
+
+	return vip, nil
+}
+
+func (c *nifcloudAPIClient) createLoadBalancer(ctx context.Context, loadBalancer LoadBalancer) (string, error) {
+	input := &computing.CreateLoadBalancerInput{
+		LoadBalancerName: nifcloud.String(loadBalancer.Name),
+		Listeners: []computing.RequestListenersStruct{
+			{
+				LoadBalancerPort: nifcloud.Int64(loadBalancer.LoadBalancerPort),
+				InstancePort:     nifcloud.Int64(loadBalancer.InstancePort),
+				BalancingType:    nifcloud.Int64(loadBalancer.BalancingType),
+			},
+		},
+	}
+	if loadBalancer.AccountingType != "" {
+		input.AccountingType = nifcloud.String(loadBalancer.AccountingType)
+	}
+	if loadBalancer.NetworkVolume != 0 {
+		input.NetworkVolume = nifcloud.Int64(loadBalancer.NetworkVolume)
+	}
+	if loadBalancer.PolicyType != "" {
+		input.PolicyType = nifcloud.String(loadBalancer.PolicyType)
+	}
+
+	req := c.client.CreateLoadBalancerRequest(input)
+	res, err := req.Send(ctx)
+	if err != nil {
+		return "", fmt.Errorf(
+			"could not create new load balancer %q (%d -> %d): %w",
+			loadBalancer.Name, loadBalancer.LoadBalancerPort,
+			loadBalancer.InstancePort, err,
+		)
+	}
+
+	return nifcloud.StringValue(res.DNSName), nil
+}
+
+func (c *nifcloudAPIClient) RegisterPortWithLoadBalancer(ctx context.Context, loadBalancer LoadBalancer) error {
+	if err := c.registerPortWithLoadBalancer(ctx, loadBalancer); err != nil {
+		return err
+	}
+
+	eg, ctx := errgroup.WithContext(ctx)
+	eg.Go(func() error {
+		return c.ConfigureHealthCheck(ctx, loadBalancer)
+	})
+	eg.Go(func() error {
+		return c.RegisterInstancesWithLoadBalancer(ctx, loadBalancer)
+	})
+	eg.Go(func() error {
+		return c.SetFilterForLoadBalancer(ctx, loadBalancer)
+	})
+
+	if err := eg.Wait(); err != nil {
+		return fmt.Errorf(
+			"failed to configure load balancer %q (%d -> %d): %w",
+			loadBalancer.Name, loadBalancer.LoadBalancerPort,
+			loadBalancer.InstancePort, err,
+		)
+	}
+
+	return nil
+}
+
+func (c *nifcloudAPIClient) registerPortWithLoadBalancer(ctx context.Context, loadBalancer LoadBalancer) error {
+	req := c.client.RegisterPortWithLoadBalancerRequest(
+		&computing.RegisterPortWithLoadBalancerInput{
+			LoadBalancerName: nifcloud.String(loadBalancer.Name),
+			Listeners: []computing.RequestListenersStruct{
+				{
+					LoadBalancerPort: nifcloud.Int64(loadBalancer.LoadBalancerPort),
+					InstancePort:     nifcloud.Int64(loadBalancer.InstancePort),
+					BalancingType:    nifcloud.Int64(loadBalancer.BalancingType),
+				},
+			},
+		},
+	)
+	_, err := req.Send(ctx)
+	if err != nil {
+		return fmt.Errorf(
+			"could not register port with load balancer %q (%d -> %d): %w",
+			loadBalancer.Name, loadBalancer.LoadBalancerPort,
+			loadBalancer.InstancePort, err,
+		)
+	}
+
+	return nil
+}
+
+func (c *nifcloudAPIClient) ConfigureHealthCheck(ctx context.Context, loadBalancer LoadBalancer) error {
+	req := c.client.ConfigureHealthCheckRequest(
+		&computing.ConfigureHealthCheckInput{
+			LoadBalancerName: nifcloud.String(loadBalancer.Name),
+			LoadBalancerPort: nifcloud.Int64(loadBalancer.LoadBalancerPort),
+			InstancePort:     nifcloud.Int64(loadBalancer.InstancePort),
+			HealthCheck: &computing.RequestHealthCheckStruct{
+				Interval:           nifcloud.Int64(loadBalancer.HealthCheckInterval),
+				Target:             nifcloud.String(loadBalancer.HealthCheckTarget),
+				UnhealthyThreshold: nifcloud.Int64(loadBalancer.HealthCheckUnhealthyThreshold),
+			},
+		},
+	)
+	_, err := req.Send(ctx)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to configure health check for %q (%d -> %d): %w",
+			loadBalancer.Name, loadBalancer.LoadBalancerPort,
+			loadBalancer.InstancePort, err,
+		)
+	}
+
+	return nil
+}
+
+func (c *nifcloudAPIClient) SetFilterForLoadBalancer(ctx context.Context, loadBalancer LoadBalancer) error {
+	ipAddresses := []computing.RequestIPAddressesStruct{}
+	for _, filter := range loadBalancer.Filters {
+		// Skip wildcard
+		if filter.IPAddress == filterAnyIPAddresses {
+			continue
+		}
+		ipAddresses = append(ipAddresses, computing.RequestIPAddressesStruct{
+			AddOnFilter: nifcloud.Bool(filter.AddOnFilter),
+			IPAddress:   nifcloud.String(filter.IPAddress),
+		})
+	}
+
+	req := c.client.SetFilterForLoadBalancerRequest(
+		&computing.SetFilterForLoadBalancerInput{
+			LoadBalancerName: nifcloud.String(loadBalancer.Name),
+			LoadBalancerPort: nifcloud.Int64(loadBalancer.LoadBalancerPort),
+			InstancePort:     nifcloud.Int64(loadBalancer.InstancePort),
+			FilterType:       nifcloud.String(loadBalancerFilterType),
+			IPAddresses:      ipAddresses,
+		},
+	)
+	_, err := req.Send(ctx)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to set filter for %q (%d -> %d): %w",
+			loadBalancer.Name, loadBalancer.LoadBalancerPort,
+			loadBalancer.InstancePort, err,
+		)
+	}
+
+	return nil
+}
+
+func (c *nifcloudAPIClient) RegisterInstancesWithLoadBalancer(ctx context.Context, loadBalancer LoadBalancer) error {
+	instances := []computing.RequestInstancesStruct{}
+	for _, instance := range loadBalancer.BalancingTargets {
+		instances = append(instances, computing.RequestInstancesStruct{
+			InstanceId: nifcloud.String(instance.InstanceID),
+		})
+	}
+	req := c.client.RegisterInstancesWithLoadBalancerRequest(
+		&computing.RegisterInstancesWithLoadBalancerInput{
+			LoadBalancerName: nifcloud.String(loadBalancer.Name),
+			LoadBalancerPort: nifcloud.Int64(loadBalancer.LoadBalancerPort),
+			InstancePort:     nifcloud.Int64(loadBalancer.InstancePort),
+			Instances:        instances,
+		},
+	)
+	_, err := req.Send(ctx)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to register instances to load balancer %q (%d -> %d): %w",
+			loadBalancer.Name, loadBalancer.LoadBalancerPort,
+			loadBalancer.InstancePort, err,
+		)
+	}
+
+	return nil
 }
 
 func handleNotFoundError(err error) error {

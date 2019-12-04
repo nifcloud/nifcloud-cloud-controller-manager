@@ -66,6 +66,7 @@ type CloudAPIClient interface {
 	RegisterPortWithLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer) error
 	DeleteLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer) error
 	RegisterInstancesWithLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer, instances []Instance) error
+	DeregisterInstancesFromLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer, instances []Instance) error
 	SetFilterForLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer) error
 }
 
@@ -434,6 +435,38 @@ func (c *nifcloudAPIClient) RegisterInstancesWithLoadBalancer(ctx context.Contex
 	if err != nil {
 		return fmt.Errorf(
 			"failed to register instances to load balancer %q (%d -> %d): %w",
+			loadBalancer.Name, loadBalancer.LoadBalancerPort,
+			loadBalancer.InstancePort, err,
+		)
+	}
+
+	return nil
+}
+
+func (c *nifcloudAPIClient) DeregisterInstancesFromLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer, instances []Instance) error {
+	if loadBalancer == nil {
+		return fmt.Errorf("loadBalancer is nil")
+	}
+
+	deregisterInstances := []computing.RequestInstancesStruct{}
+	for _, instance := range instances {
+		deregisterInstances = append(deregisterInstances,
+			computing.RequestInstancesStruct{
+				InstanceId: nifcloud.String(instance.InstanceID),
+			})
+	}
+	req := c.client.DeregisterInstancesFromLoadBalancerRequest(
+		&computing.DeregisterInstancesFromLoadBalancerInput{
+			LoadBalancerName: nifcloud.String(loadBalancer.Name),
+			LoadBalancerPort: nifcloud.Int64(loadBalancer.LoadBalancerPort),
+			InstancePort:     nifcloud.Int64(loadBalancer.InstancePort),
+			Instances:        deregisterInstances,
+		},
+	)
+	_, err := req.Send(ctx)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to deregister instances from load balancer %q (%d -> %d): %w",
 			loadBalancer.Name, loadBalancer.LoadBalancerPort,
 			loadBalancer.InstancePort, err,
 		)

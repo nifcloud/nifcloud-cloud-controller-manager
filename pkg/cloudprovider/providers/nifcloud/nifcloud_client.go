@@ -66,7 +66,7 @@ func (i *Instance) Equals(other Instance) bool {
 func (lb *LoadBalancer) Equals(other LoadBalancer) bool {
 	return lb.Name == other.Name &&
 		lb.LoadBalancerPort == other.LoadBalancerPort &&
-		lb.InstancePort == other.LoadBalancerPort
+		lb.InstancePort == other.InstancePort
 }
 
 // Equals method checks whether specified filter is the same

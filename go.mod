@@ -3,7 +3,7 @@ module github.com/aokumasan/nifcloud-cloud-controller-manager
 go 1.13
 
 require (
-	github.com/aokumasan/nifcloud-sdk-go-v2 v0.0.4
+	github.com/aokumasan/nifcloud-sdk-go-v2 v0.0.5
 	github.com/aws/aws-sdk-go-v2 v0.15.0
 	github.com/mattn/go-shellwords v1.0.5
 	github.com/prometheus/client_golang v0.9.2

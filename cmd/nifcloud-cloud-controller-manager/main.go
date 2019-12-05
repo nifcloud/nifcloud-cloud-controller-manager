@@ -16,9 +16,11 @@ import (
 	"k8s.io/kubernetes/cmd/cloud-controller-manager/app"
 	cloudcontrollerconfig "k8s.io/kubernetes/cmd/cloud-controller-manager/app/config"
 	"k8s.io/kubernetes/cmd/cloud-controller-manager/app/options"
+	_ "k8s.io/kubernetes/pkg/client/metrics/prometheus" // for client metric registration
 	cloudcontrollers "k8s.io/kubernetes/pkg/controller/cloud"
 	servicecontroller "k8s.io/kubernetes/pkg/controller/service"
 	utilflag "k8s.io/kubernetes/pkg/util/flag"
+	_ "k8s.io/kubernetes/pkg/version/prometheus" // for version metric registration
 )
 
 var version string

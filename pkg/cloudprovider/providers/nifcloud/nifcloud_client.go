@@ -45,7 +45,7 @@ type LoadBalancer struct {
 	HealthCheckTarget             string
 	HealthCheckInterval           int64
 	HealthCheckUnhealthyThreshold int64
-	Filters                       []Filter
+	Filters                       []string
 }
 
 // Filter is load balancer filter detail
@@ -67,11 +67,6 @@ func (lb *LoadBalancer) Equals(other LoadBalancer) bool {
 	return lb.Name == other.Name &&
 		lb.LoadBalancerPort == other.LoadBalancerPort &&
 		lb.InstancePort == other.InstancePort
-}
-
-// Equals method checks whether specified filter is the same
-func (f *Filter) Equals(other Filter) bool {
-	return f.IPAddress == other.IPAddress
 }
 
 // CloudAPIClient is interface
@@ -214,9 +209,9 @@ func (c *nifcloudAPIClient) DescribeLoadBalancers(ctx context.Context, name stri
 		}
 		lb.BalancingTargets = balancingTargets
 
-		filters := []Filter{}
+		filters := []string{}
 		for _, filter := range lbDesc.Filter.IPAddresses {
-			filters = append(filters, Filter{IPAddress: nifcloud.StringValue(filter.IPAddress)})
+			filters = append(filters, nifcloud.StringValue(filter.IPAddress))
 		}
 		lb.Filters = filters
 
@@ -396,9 +391,9 @@ func (c *nifcloudAPIClient) SetFilterForLoadBalancer(ctx context.Context, loadBa
 
 	if filters == nil {
 		// if filters is nil, authorize all of LoadBalancer.Filters
-		filters = loadBalancer.Filters
-		for _, f := range filters {
-			f.AddOnFilter = true
+		filters = []Filter{}
+		for _, f := range loadBalancer.Filters {
+			filters = append(filters, Filter{AddOnFilter: true, IPAddress: f})
 		}
 	}
 

@@ -193,9 +193,18 @@ func (c *Cloud) EnsureLoadBalancer(ctx context.Context, clusterName string, serv
 		if err != nil {
 			return nil, err
 		}
-		filters := []Filter{}
+		filters := []string{}
 		for cidr := range sourceRanges {
-			filters = append(filters, Filter{IPAddress: cidr})
+			if cidr == "0.0.0.0/0" {
+				filters = append(filters, filterAnyIPAddresses)
+			} else {
+				if !strings.Contains(cidr, "/32") {
+					return nil, fmt.Errorf(
+						"cannot use CIDR %q other than /32 (NIFCLOUD load balancer does not support CIDR filter)", cidr,
+					)
+				}
+				filters = append(filters, strings.Replace(cidr, "/32", "", 1))
+			}
 		}
 		desire[i].Filters = filters
 	}
@@ -304,36 +313,48 @@ func (c *Cloud) ensureLoadBalancer(ctx context.Context, desire []LoadBalancer) (
 
 		// reconcile balancing targets
 		toRegister := loadBalancingTargetsDifferences(desireLB.BalancingTargets, currentLB.BalancingTargets)
-		klog.Infof(
-			"Register instances with load balancer %q (%d -> %d): %v",
-			currentLB.Name, currentLB.LoadBalancerPort, currentLB.InstancePort, toRegister,
-		)
-		if err := c.client.RegisterInstancesWithLoadBalancer(ctx, &currentLB, toRegister); err != nil {
-			return nil, fmt.Errorf("failed to register instances: %w", err)
+		if len(toRegister) > 0 {
+			klog.Infof(
+				"Register instances with load balancer %q (%d -> %d): %v",
+				currentLB.Name, currentLB.LoadBalancerPort, currentLB.InstancePort, toRegister,
+			)
+			if err := c.client.RegisterInstancesWithLoadBalancer(ctx, &currentLB, toRegister); err != nil {
+				return nil, fmt.Errorf("failed to register instances: %w", err)
+			}
 		}
 
 		toDeregister := loadBalancingTargetsDifferences(currentLB.BalancingTargets, desireLB.BalancingTargets)
-		klog.Infof(
-			"Deregister instances from load balancer %q (%d -> %d): %v",
-			currentLB.Name, currentLB.LoadBalancerPort, currentLB.InstancePort, toRegister,
-		)
-		if err := c.client.DeregisterInstancesFromLoadBalancer(ctx, &currentLB, toDeregister); err != nil {
-			return nil, fmt.Errorf("failed to deregister instances: %w", err)
+		if len(toDeregister) > 0 {
+			klog.Infof(
+				"Deregister instances from load balancer %q (%d -> %d): %v",
+				currentLB.Name, currentLB.LoadBalancerPort, currentLB.InstancePort, toDeregister,
+			)
+			if err := c.client.DeregisterInstancesFromLoadBalancer(ctx, &currentLB, toDeregister); err != nil {
+				return nil, fmt.Errorf("failed to deregister instances: %w", err)
+			}
 		}
 
 		// reconcile filters
 		toAuthorize := filterDifferences(desireLB.Filters, currentLB.Filters)
 		toRevoke := filterDifferences(currentLB.Filters, desireLB.Filters)
 		toSet := []Filter{}
-		for _, f := range toAuthorize {
-			toSet = append(toSet, Filter{AddOnFilter: true, IPAddress: f.IPAddress})
+		for _, addr := range toAuthorize {
+			if addr == filterAnyIPAddresses {
+				continue
+			}
+			toSet = append(toSet, Filter{AddOnFilter: true, IPAddress: addr})
 		}
-		for _, f := range toRevoke {
-			toSet = append(toSet, Filter{AddOnFilter: false, IPAddress: f.IPAddress})
+		for _, addr := range toRevoke {
+			if addr == filterAnyIPAddresses {
+				continue
+			}
+			toSet = append(toSet, Filter{AddOnFilter: false, IPAddress: addr})
 		}
-		klog.Infof("Applying filter: %v", toSet)
-		if err := c.client.SetFilterForLoadBalancer(ctx, &currentLB, toSet); err != nil {
-			return nil, fmt.Errorf("failed to set filter for load balancer: %w", err)
+		if len(toSet) > 0 {
+			klog.Infof("Applying filter: %v", toSet)
+			if err := c.client.SetFilterForLoadBalancer(ctx, &currentLB, toSet); err != nil {
+				return nil, fmt.Errorf("failed to set filter for load balancer: %w", err)
+			}
 		}
 	}
 
@@ -391,12 +412,12 @@ func loadBalancingTargetsDifferences(target, other []Instance) []Instance {
 	return diff
 }
 
-func filterDifferences(target, other []Filter) []Filter {
-	diff := []Filter{}
+func filterDifferences(target, other []string) []string {
+	diff := []string{}
 	for _, x := range target {
 		found := false
 		for _, y := range other {
-			if x.Equals(y) {
+			if x == y {
 				found = true
 				break
 			}

@@ -281,6 +281,9 @@ func (c *Cloud) ensureLoadBalancer(ctx context.Context, desire []LoadBalancer) (
 		return nil, fmt.Errorf("failed to describe load balanacer %q: %w", loadBalancerName, err)
 	}
 
+	klog.Infof("desire: %v, current: %v", desire, current)
+
+	loadBalancerResourceChanged := false
 	if len(current) < len(desire) {
 		toCreate := loadBalancerDifferences(desire, current)
 		for _, lb := range toCreate {
@@ -288,6 +291,7 @@ func (c *Cloud) ensureLoadBalancer(ctx context.Context, desire []LoadBalancer) (
 			if err := c.client.RegisterPortWithLoadBalancer(ctx, &lb); err != nil {
 				return nil, fmt.Errorf("failed to add port to load balancer: %w", err)
 			}
+			loadBalancerResourceChanged = true
 		}
 	} else if len(current) > len(desire) {
 		toDelete := loadBalancerDifferences(current, desire)
@@ -296,14 +300,19 @@ func (c *Cloud) ensureLoadBalancer(ctx context.Context, desire []LoadBalancer) (
 			if err := c.client.DeleteLoadBalancer(ctx, &lb); err != nil {
 				return nil, fmt.Errorf("failed to delete load balancer: %w", err)
 			}
+			loadBalancerResourceChanged = true
 		}
 	}
 
 	// fetch load balancers again to update latest load balancer info
-	current, err = c.client.DescribeLoadBalancers(ctx, loadBalancerName)
-	if err != nil {
-		return nil, fmt.Errorf("failed to describe load balanacer %q: %w", loadBalancerName, err)
+	if loadBalancerResourceChanged {
+		current, err = c.client.DescribeLoadBalancers(ctx, loadBalancerName)
+		if err != nil {
+			return nil, fmt.Errorf("failed to describe load balanacer %q: %w", loadBalancerName, err)
+		}
 	}
+
+	klog.Infof("desire: %v, current: %v", desire, current)
 
 	for _, currentLB := range current {
 		desireLB, err := findLoadBalancer(desire, currentLB)

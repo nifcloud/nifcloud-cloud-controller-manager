@@ -242,6 +242,7 @@ func (c *Cloud) EnsureLoadBalancerDeleted(ctx context.Context, clusterName strin
 	}
 
 	for _, lb := range loadBalancers {
+		klog.Infof("Deleting LoadBalancer %q (%d -> %d)", lb.Name, lb.LoadBalancerPort, lb.InstancePort)
 		if err := c.client.DeleteLoadBalancer(ctx, &lb); err != nil {
 			return fmt.Errorf("failed to delete load balancer: %w", err)
 		}

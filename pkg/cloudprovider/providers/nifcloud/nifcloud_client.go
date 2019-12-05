@@ -187,10 +187,6 @@ func (c *nifcloudAPIClient) DescribeLoadBalancers(ctx context.Context, name stri
 		return nil, fmt.Errorf("could not fetch load balancers info for %q: %v", name, err)
 	}
 
-	if len(res.LoadBalancerDescriptions) == 0 {
-		return nil, fmt.Errorf("cloud not find load balancer %q: %v", name, err)
-	}
-
 	result := []LoadBalancer{}
 	for _, lbDesc := range res.LoadBalancerDescriptions {
 		lb := LoadBalancer{

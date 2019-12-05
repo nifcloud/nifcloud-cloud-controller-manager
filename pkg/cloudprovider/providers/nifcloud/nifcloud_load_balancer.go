@@ -16,6 +16,11 @@ const (
 	maxLoadBalanacerNameLength  = 15
 	maxPortCountPerLoadBalancer = 3
 
+	// default health check parameter values
+	defaultHealthCheckInterval           = 10
+	defaultHealthCheckUnhealthyThreshold = 1
+	defaultHealthCheckTarget             = "TCP"
+
 	// ServiceAnnotationLoadBalancerNetworkVolume is the annotation that specify network volume for load balancer
 	// valid volume is 10, 20, ..., 2000
 	// See https://pfs.nifcloud.com/api/rest/CreateLoadBalancer.htm
@@ -149,6 +154,8 @@ func (c *Cloud) EnsureLoadBalancer(ctx context.Context, clusterName string, serv
 				)
 			}
 			desire[i].HealthCheckInterval = int64(i)
+		} else {
+			desire[i].HealthCheckInterval = defaultHealthCheckInterval
 		}
 		if unhealthyThreshold, ok := annotations[ServiceAnnotationLoadBalancerHCUnhealthyThreshold]; ok {
 			t, err := strconv.Atoi(unhealthyThreshold)
@@ -159,6 +166,8 @@ func (c *Cloud) EnsureLoadBalancer(ctx context.Context, clusterName string, serv
 				)
 			}
 			desire[i].HealthCheckUnhealthyThreshold = int64(t)
+		} else {
+			desire[i].HealthCheckUnhealthyThreshold = defaultHealthCheckUnhealthyThreshold
 		}
 		if proto, ok := annotations[ServiceAnnotationLoadBalancerHCProtocol]; ok {
 			switch strings.ToUpper(proto) {
@@ -172,6 +181,8 @@ func (c *Cloud) EnsureLoadBalancer(ctx context.Context, clusterName string, serv
 					proto, service.GetName(),
 				)
 			}
+		} else {
+			desire[i].HealthCheckTarget = fmt.Sprintf("%s:%d", defaultHealthCheckTarget, port.NodePort)
 		}
 
 		// balancing targets

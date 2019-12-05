@@ -188,7 +188,7 @@ func (c *nifcloudAPIClient) DescribeLoadBalancers(ctx context.Context, name stri
 	}
 
 	result := []LoadBalancer{}
-	for _, lbDesc := range res.LoadBalancerDescriptions {
+	for _, lbDesc := range res.DescribeLoadBalancersResult.LoadBalancerDescriptions {
 		lb := LoadBalancer{
 			Name:                          nifcloud.StringValue(lbDesc.LoadBalancerName),
 			VIP:                           nifcloud.StringValue(lbDesc.DNSName),

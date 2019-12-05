@@ -112,12 +112,12 @@ func (c *nifcloudAPIClient) DescribeInstancesByInstanceID(ctx context.Context, i
 		return nil, handleNotFoundError(err)
 	}
 
-	if err := checkReservationSet(res.ReservationSet); err != nil {
-		return nil, err
-	}
-
 	instances := []Instance{}
-	for _, instance := range res.ReservationSet[0].InstancesSet {
+	for _, rs := range res.ReservationSet {
+		if len(rs.InstancesSet) == 0 {
+			return nil, fmt.Errorf("instances set is empty")
+		}
+		instance := rs.InstancesSet[0]
 		instances = append(instances, Instance{
 			InstanceID:       nifcloud.StringValue(instance.InstanceId),
 			InstanceUniqueID: nifcloud.StringValue(instance.InstanceUniqueId),
@@ -153,12 +153,12 @@ func (c *nifcloudAPIClient) DescribeInstancesByInstanceUniqueID(ctx context.Cont
 		return nil, handleNotFoundError(err)
 	}
 
-	if err := checkReservationSet(res.ReservationSet); err != nil {
-		return nil, err
-	}
-
 	instances := []Instance{}
-	for _, instance := range res.ReservationSet[0].InstancesSet {
+	for _, rs := range res.ReservationSet {
+		if len(rs.InstancesSet) == 0 {
+			return nil, fmt.Errorf("instances set is empty")
+		}
+		instance := rs.InstancesSet[0]
 		instances = append(instances, Instance{
 			InstanceID:       nifcloud.StringValue(instance.InstanceId),
 			InstanceUniqueID: nifcloud.StringValue(instance.InstanceUniqueId),
@@ -537,16 +537,4 @@ func handleNotFoundError(err error) error {
 	default:
 		return err
 	}
-}
-
-func checkReservationSet(rs []computing.ReservationSetItem) error {
-	if len(rs) == 0 {
-		return cloudprovider.InstanceNotFound
-	}
-
-	if len(rs[0].InstancesSet) == 0 {
-		return cloudprovider.InstanceNotFound
-	}
-
-	return nil
 }

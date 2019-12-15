@@ -72,5 +72,10 @@ func getInstanceIDFromGuestInfo() (string, error) {
 		return "", fmt.Errorf("could not get instance id from vmtoolsd: %v (%v)", string(out), err)
 	}
 
-	return strings.TrimSpace(string(out)), nil
+	instanceID := strings.TrimSpace(string(out))
+	if len(instanceID) == 0 {
+		return "", fmt.Errorf("guestinfo does not have hostname")
+	}
+
+	return instanceID, nil
 }

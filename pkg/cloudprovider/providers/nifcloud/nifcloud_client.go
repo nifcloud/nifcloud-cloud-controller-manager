@@ -3,13 +3,11 @@ package nifcloud
 import (
 	"context"
 	"fmt"
-	"net/url"
 	"strings"
 
 	"github.com/aokumasan/nifcloud-sdk-go-v2/nifcloud"
 	"github.com/aokumasan/nifcloud-sdk-go-v2/service/computing"
 	"github.com/aws/aws-sdk-go-v2/aws/awserr"
-	"github.com/aws/aws-sdk-go-v2/private/protocol/query/queryutil"
 	"golang.org/x/sync/errgroup"
 	cloudprovider "k8s.io/cloud-provider"
 )
@@ -128,21 +126,6 @@ func (c *nifcloudAPIClient) DescribeInstancesByInstanceID(ctx context.Context, i
 
 func (c *nifcloudAPIClient) DescribeInstancesByInstanceUniqueID(ctx context.Context, instanceUniqueIDs []string) ([]Instance, error) {
 	req := c.client.DescribeInstancesRequest(nil)
-	if err := req.Request.Build(); err != nil {
-		return nil, fmt.Errorf("failed building request: %v", err)
-	}
-	body := url.Values{
-		"Action":  {req.Operation.Name},
-		"Version": {req.Metadata.APIVersion},
-	}
-	if err := queryutil.Parse(body, req.Params, false); err != nil {
-		return nil, fmt.Errorf("failed encoding request: %v", err)
-	}
-	for i, uniqueID := range instanceUniqueIDs {
-		body.Set(fmt.Sprintf("InstanceUniqueId.%d", i+1), uniqueID)
-	}
-	req.SetBufferBody([]byte(body.Encode()))
-
 	res, err := req.Send(ctx)
 	if err != nil {
 		return nil, handleNotFoundError(err)
@@ -154,6 +137,9 @@ func (c *nifcloudAPIClient) DescribeInstancesByInstanceUniqueID(ctx context.Cont
 			return nil, fmt.Errorf("instances set is empty")
 		}
 		instance := rs.InstancesSet[0]
+		if !contains(instanceUniqueIDs, nifcloud.StringValue(instance.InstanceUniqueId)) {
+			continue
+		}
 		instances = append(instances, Instance{
 			InstanceID:       nifcloud.StringValue(instance.InstanceId),
 			InstanceUniqueID: nifcloud.StringValue(instance.InstanceUniqueId),
@@ -162,6 +148,10 @@ func (c *nifcloudAPIClient) DescribeInstancesByInstanceUniqueID(ctx context.Cont
 			PrivateIPAddress: nifcloud.StringValue(instance.PrivateIpAddress),
 			Zone:             nifcloud.StringValue(instance.Placement.AvailabilityZone),
 		})
+	}
+
+	if len(instances) == 0 {
+		return nil, cloudprovider.InstanceNotFound
 	}
 
 	return instances, nil
@@ -532,4 +522,13 @@ func handleNotFoundError(err error) error {
 	default:
 		return err
 	}
+}
+
+func contains(s []string, e string) bool {
+	for _, v := range s {
+		if e == v {
+			return true
+		}
+	}
+	return false
 }

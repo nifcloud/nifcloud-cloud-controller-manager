@@ -280,7 +280,7 @@ func (c *nifcloudAPIClient) createLoadBalancer(ctx context.Context, loadBalancer
 		)
 	}
 
-	return nifcloud.StringValue(res.DNSName), nil
+	return nifcloud.StringValue(res.CreateLoadBalancerResult.DNSName), nil
 }
 
 func (c *nifcloudAPIClient) RegisterPortWithLoadBalancer(ctx context.Context, loadBalancer *LoadBalancer) error {

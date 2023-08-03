@@ -8,7 +8,7 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	servicehelpers "k8s.io/cloud-provider/service/helpers"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 const (

@@ -19,7 +19,7 @@ type Cloud struct {
 
 func init() {
 	registerMetrics()
-	cloudprovider.RegisterCloudProvider(ProviderName, func(config io.Reader) (cloudprovider.Interface, error) {
+	cloudprovider.RegisterCloudProvider(ProviderName, func(_ io.Reader) (cloudprovider.Interface, error) {
 		return newNIFCLOUD()
 	})
 }
@@ -57,6 +57,10 @@ func (c *Cloud) LoadBalancer() (cloudprovider.LoadBalancer, bool) {
 
 // Instances returns an implementation of Instances for NIFCLOUD
 func (c *Cloud) Instances() (cloudprovider.Instances, bool) {
+	return c, true
+}
+
+func (c *Cloud) InstancesV2() (cloudprovider.InstancesV2, bool) {
 	return c, true
 }
 

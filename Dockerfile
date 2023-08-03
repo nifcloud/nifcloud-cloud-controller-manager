@@ -7,7 +7,7 @@ RUN make build
 
 # -----
 
-FROM alpine:3.10.3
+FROM alpine:3.18.2
 
 RUN apk add --no-cache open-vm-tools
 COPY --from=builder /go/src/github.com/aokumasan/nifcloud-cloud-controller-manager/bin/nifcloud-cloud-controller-manager /bin/nifcloud-cloud-controller-manager

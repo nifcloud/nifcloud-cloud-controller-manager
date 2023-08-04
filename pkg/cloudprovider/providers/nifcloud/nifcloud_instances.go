@@ -2,6 +2,7 @@ package nifcloud
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
 
@@ -132,6 +133,76 @@ func (c *Cloud) InstanceExistsByProviderID(ctx context.Context, providerID strin
 // InstanceShutdownByProviderID returns true if the instance is shutdown in cloudprovider
 func (c *Cloud) InstanceShutdownByProviderID(ctx context.Context, providerID string) (bool, error) {
 	return false, cloudprovider.NotImplemented
+}
+
+// InstanceExists returns true if the instance for the given node exists according to the cloud provider.
+func (c *Cloud) InstanceExists(ctx context.Context, node *v1.Node) (bool, error) {
+	_, err := c.getInstance(ctx, node)
+	if err != nil {
+		if errors.Is(err, cloudprovider.InstanceNotFound) {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return true, nil
+}
+
+// InstanceShutdown returns true if the instance is shutdown according to the cloud provider.
+func (c *Cloud) InstanceShutdown(ctx context.Context, node *v1.Node) (bool, error) {
+	instance, err := c.getInstance(ctx, node)
+	if err != nil {
+		return false, err
+	}
+
+	if instance.State == "stopped" {
+		return true, nil
+	}
+
+	return false, nil
+}
+
+// InstanceMetadata returns the instance's metadata.
+func (c *Cloud) InstanceMetadata(ctx context.Context, node *v1.Node) (*cloudprovider.InstanceMetadata, error) {
+	instance, err := c.getInstance(ctx, node)
+	if err != nil {
+		return nil, err
+	}
+
+	return &cloudprovider.InstanceMetadata{
+		ProviderID:    fmt.Sprintf("nifcloud:///%s/%s", instance.Zone, instance.InstanceUniqueID),
+		InstanceType:  instance.InstanceType,
+		NodeAddresses: getNodeAddress(*instance),
+	}, nil
+}
+
+func (c *Cloud) getInstance(ctx context.Context, node *v1.Node) (*Instance, error) {
+	var (
+		instances []Instance
+		err       error
+	)
+	if node.Spec.ProviderID != "" {
+		instanceUniqueID, err := getInstanceUniqueIDFromProviderID(node.Spec.ProviderID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get instance unique id from provider id: %w", err)
+		}
+
+		instances, err = c.client.DescribeInstancesByInstanceUniqueID(ctx, []string{instanceUniqueID})
+		if err != nil {
+			return nil, fmt.Errorf("could not fetch instance info by instance unique id %s: %w", instanceUniqueID, err)
+		}
+	} else {
+		instances, err = c.client.DescribeInstancesByInstanceID(ctx, []string{node.Name})
+		if err != nil {
+			return nil, fmt.Errorf("could not fetch instance info by node name %s: %w", node.Name, err)
+		}
+	}
+
+	if err := isSingleInstance(instances, node.Name); err != nil {
+		return nil, err
+	}
+
+	return &instances[0], nil
 }
 
 func getNodeAddress(instance Instance) []v1.NodeAddress {

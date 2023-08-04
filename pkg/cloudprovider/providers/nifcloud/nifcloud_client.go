@@ -27,6 +27,7 @@ type Instance struct {
 	PublicIPAddress  string
 	PrivateIPAddress string
 	Zone             string
+	State            string
 }
 
 // LoadBalancer is load balancer detail
@@ -118,7 +119,12 @@ func (c *nifcloudAPIClient) DescribeInstancesByInstanceID(ctx context.Context, i
 			PublicIPAddress:  nifcloud.StringValue(instance.IpAddress),
 			PrivateIPAddress: nifcloud.StringValue(instance.PrivateIpAddress),
 			Zone:             nifcloud.StringValue(instance.Placement.AvailabilityZone),
+			State:            nifcloud.StringValue(instance.InstanceState.Name),
 		})
+	}
+
+	if len(instances) == 0 {
+		return nil, cloudprovider.InstanceNotFound
 	}
 
 	return instances, nil
@@ -147,6 +153,7 @@ func (c *nifcloudAPIClient) DescribeInstancesByInstanceUniqueID(ctx context.Cont
 			PublicIPAddress:  nifcloud.StringValue(instance.IpAddress),
 			PrivateIPAddress: nifcloud.StringValue(instance.PrivateIpAddress),
 			Zone:             nifcloud.StringValue(instance.Placement.AvailabilityZone),
+			State:            nifcloud.StringValue(instance.InstanceState.Name),
 		})
 	}
 

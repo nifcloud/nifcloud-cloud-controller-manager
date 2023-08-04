@@ -14,9 +14,9 @@ var execCommand = exec.Command
 
 // getInstanceUniqueIDFromProviderID converts provider id to instance id
 // valid provider id:
-//  * nifcloud:///<zone>/<InstanceId>
-//  * nifcloud:////<InstanceId>
-//  * <InstanceId>
+//   - nifcloud:///<zone>/<InstanceId>
+//   - nifcloud:////<InstanceId>
+//   - <InstanceId>
 func getInstanceUniqueIDFromProviderID(providerID string) (string, error) {
 	s := string(providerID)
 

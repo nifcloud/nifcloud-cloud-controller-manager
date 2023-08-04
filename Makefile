@@ -15,3 +15,6 @@ image:
 
 push:
 	docker push $(IMAGE):$(VERSION)
+
+helm-package:
+	cd charts; helm package nifcloud-cloud-controller-manager

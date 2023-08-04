@@ -173,6 +173,8 @@ func (c *Cloud) InstanceMetadata(ctx context.Context, node *v1.Node) (*cloudprov
 		ProviderID:    fmt.Sprintf("nifcloud:///%s/%s", instance.Zone, instance.InstanceUniqueID),
 		InstanceType:  instance.InstanceType,
 		NodeAddresses: getNodeAddress(*instance),
+		Zone:          instance.Zone,
+		Region:        c.region,
 	}, nil
 }
 

@@ -1,7 +1,7 @@
-PKG=github.com/aokumasan/nifcloud-cloud-controller-manager
-IMAGE?=aokumasan/nifcloud-cloud-controller-manager
-VERSION=v0.0.1
-LDFLAGS?="-X main.version=$(VERSION) -X k8s.io/component-base/version.gitVersion=$(VERSION) -s -w"
+PKG:=github.com/aokumasan/nifcloud-cloud-controller-manager
+IMAGE:=aokumasan/nifcloud-cloud-controller-manager
+VERSION:=$(shell git describe --tags --dirty --match="v*")
+LDFLAGS:="-X main.version=$(VERSION) -X k8s.io/component-base/version.gitVersion=$(VERSION) -s -w"
 
 build:
 	mkdir -p bin
@@ -11,7 +11,7 @@ test:
 	go test -cover ./...
 
 image:
-	docker build -t $(IMAGE):latest .
+	docker build -t $(IMAGE):$(VERSION) .
 
 push:
-	docker push $(IMAGE):latest
+	docker push $(IMAGE):$(VERSION)

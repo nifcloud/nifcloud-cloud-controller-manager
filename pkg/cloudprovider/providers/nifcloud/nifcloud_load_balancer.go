@@ -3,6 +3,7 @@ package nifcloud
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -198,19 +199,16 @@ func (c *Cloud) EnsureLoadBalancer(ctx context.Context, clusterName string, serv
 			return nil, err
 		}
 		filters := []string{}
-		for cidr := range sourceRanges {
-			if cidr == "0.0.0.0/0" {
-				filters = append(filters, filterAnyIPAddresses)
-			} else {
-				if !strings.Contains(cidr, "/32") {
-					return nil, fmt.Errorf(
-						"cannot use CIDR %q other than /32 (NIFCLOUD load balancer does not support CIDR filter)", cidr,
-					)
+		if !servicehelpers.IsAllowAll(sourceRanges) {
+			for cidr := range sourceRanges {
+				if strings.HasSuffix(cidr, "/32") {
+					filters = append(filters, strings.TrimSuffix(cidr, "/32"))
+				} else {
+					filters = append(filters, strings.Replace(cidr, "/32", "", 1))
 				}
-				filters = append(filters, strings.Replace(cidr, "/32", "", 1))
 			}
 		}
-		desire[i].Filters = filters
+		desire[i].Filters = sort.StringSlice(filters)
 	}
 
 	return c.ensureLoadBalancer(ctx, desire)

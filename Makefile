@@ -1,7 +1,7 @@
 PKG:=github.com/aokumasan/nifcloud-cloud-controller-manager
 IMAGE:=ghcr.io/aokumasan/nifcloud-cloud-controller-manager
 VERSION:=$(shell git describe --tags --dirty --match="v*")
-LDFLAGS:="-X main.version=$(VERSION) -X k8s.io/component-base/version.gitVersion=$(VERSION) -s -w"
+LDFLAGS:="-X k8s.io/component-base/version.gitVersion=$(VERSION) -s -w"
 
 build:
 	mkdir -p bin

@@ -4,7 +4,6 @@ go 1.20
 
 require (
 	github.com/aws/smithy-go v1.14.0
-	github.com/mattn/go-shellwords v1.0.5
 	github.com/nifcloud/nifcloud-sdk-go v1.21.0
 	github.com/prometheus/client_golang v1.14.0
 	github.com/samber/lo v1.38.1

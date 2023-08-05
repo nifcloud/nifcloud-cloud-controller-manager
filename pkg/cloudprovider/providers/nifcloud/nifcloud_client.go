@@ -9,6 +9,7 @@ import (
 	"github.com/nifcloud/nifcloud-sdk-go/nifcloud"
 	"github.com/nifcloud/nifcloud-sdk-go/service/computing"
 	"github.com/nifcloud/nifcloud-sdk-go/service/computing/types"
+	"github.com/samber/lo"
 	cloudprovider "k8s.io/cloud-provider"
 )
 
@@ -102,7 +103,11 @@ func newNIFCLOUDAPIClient(accessKeyID, secretAccessKey, region string) CloudAPIC
 func (c *nifcloudAPIClient) DescribeInstancesByInstanceID(ctx context.Context, instanceIDs []string) ([]Instance, error) {
 	res, err := c.client.DescribeInstances(ctx, &computing.DescribeInstancesInput{InstanceId: instanceIDs})
 	if err != nil {
-		return nil, handleNotFoundError(err)
+		var awsErr smithy.APIError
+		if errors.As(err, &awsErr) && awsErr.ErrorCode() == "Client.InvalidParameterNotFound.Instance" {
+			return nil, cloudprovider.InstanceNotFound
+		}
+		return nil, fmt.Errorf("failed to call DescribeInstances with instance ids %v: %w", instanceIDs, err)
 	}
 
 	instances := []Instance{}
@@ -141,7 +146,7 @@ func (c *nifcloudAPIClient) DescribeInstancesByInstanceUniqueID(ctx context.Cont
 			return nil, fmt.Errorf("instances set is empty")
 		}
 		instance := rs.InstancesSet[0]
-		if !contains(instanceUniqueIDs, nifcloud.ToString(instance.InstanceUniqueId)) {
+		if !lo.Contains(instanceUniqueIDs, nifcloud.ToString(instance.InstanceUniqueId)) {
 			continue
 		}
 		instances = append(instances, Instance{
@@ -459,21 +464,4 @@ func (c *nifcloudAPIClient) DeleteLoadBalancer(ctx context.Context, loadBalancer
 	}
 
 	return nil
-}
-
-func handleNotFoundError(err error) error {
-	var awsErr smithy.APIError
-	if errors.As(err, &awsErr) && awsErr.ErrorCode() == "Client.InvalidParameterNotFound.Instance" {
-		return cloudprovider.InstanceNotFound
-	}
-	return err
-}
-
-func contains(s []string, e string) bool {
-	for _, v := range s {
-		if e == v {
-			return true
-		}
-	}
-	return false
 }

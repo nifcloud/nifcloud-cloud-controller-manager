@@ -14,8 +14,6 @@ import (
 	"k8s.io/klog/v2"
 )
 
-var version string
-
 func main() {
 	logs.InitLogs()
 	defer logs.FlushLogs()

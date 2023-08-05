@@ -3,6 +3,7 @@ package nifcloud
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"k8s.io/apimachinery/pkg/types"
 	cloudprovider "k8s.io/cloud-provider"
@@ -10,9 +11,9 @@ import (
 
 // GetZone returns the Zone containing the current failure zone and locality region that the program is running in
 func (c *Cloud) GetZone(ctx context.Context) (cloudprovider.Zone, error) {
-	instanceID, err := getInstanceIDFromGuestInfo()
-	if err != nil {
-		return cloudprovider.Zone{}, fmt.Errorf("could not get instance id for this node: %w", err)
+	instanceID := os.Getenv("NODE_NAME")
+	if instanceID == "" {
+		return cloudprovider.Zone{}, fmt.Errorf("could not get instance id for this node. environment variable 'NODE_NAME' is empty")
 	}
 
 	instances, err := c.client.DescribeInstancesByInstanceID(ctx, []string{instanceID})

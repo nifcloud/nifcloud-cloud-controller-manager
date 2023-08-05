@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "nifcloud-cloud-controller-manager.name" . }}
+  labels:
+    {{- include "nifcloud-cloud-controller-manager.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "nifcloud-cloud-controller-manager.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "nifcloud-cloud-controller-manager.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: nifcloud-cloud-controller-manager
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - --cloud-provider=nifcloud
+            - --leader-elect=true
+            - --use-service-account-credentials
+          env:
+            - name: NIFCLOUD_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ required "NIFCLOUD access key id secret name is required" .Values.nifcloud.accessKeyId.secretName }}
+                  key: {{ required "NIFCLOUD access key id secret key is required" .Values.nifcloud.accessKeyId.key }}
+            - name: NIFCLOUD_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ required "NIFCLOUD secret access key secret name is required" .Values.nifcloud.secretAccessKey.secretName }}
+                  key: {{ required "NIFCLOUD secret access key secret key is required" .Values.nifcloud.secretAccessKey.key }}
+            - name: NIFCLOUD_REGION
+              value: {{ required "NIFCLOUD region is required" .Values.nifcloud.region }}
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      hostNetwork: true
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

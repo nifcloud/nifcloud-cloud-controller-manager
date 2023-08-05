@@ -7,7 +7,7 @@ RUN make build
 
 # -----
 
-FROM alpine:3.18.2
+FROM gcr.io/distroless/static:nonroot
 
 COPY --from=builder /go/src/github.com/aokumasan/nifcloud-cloud-controller-manager/bin/nifcloud-cloud-controller-manager /bin/nifcloud-cloud-controller-manager
 ENTRYPOINT ["/bin/nifcloud-cloud-controller-manager"]

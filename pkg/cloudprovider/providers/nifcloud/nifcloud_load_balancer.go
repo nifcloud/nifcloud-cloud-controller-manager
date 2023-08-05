@@ -114,11 +114,13 @@ func (c *Cloud) EnsureLoadBalancer(ctx context.Context, clusterName string, serv
 					rawBalancingType, service.GetName(), err,
 				)
 			}
-			desire[i].BalancingType = int64(balancingType)
+			desire[i].BalancingType = int32(balancingType)
 		}
+
 		if accountingType, ok := annotations[ServiceAnnotationLoadBalancerAccountingType]; ok {
 			desire[i].AccountingType = accountingType
 		}
+
 		if networkVolume, ok := annotations[ServiceAnnotationLoadBalancerNetworkVolume]; ok {
 			v, err := strconv.Atoi(networkVolume)
 			if err != nil {
@@ -127,7 +129,7 @@ func (c *Cloud) EnsureLoadBalancer(ctx context.Context, clusterName string, serv
 					networkVolume, service.GetName(), err,
 				)
 			}
-			desire[i].NetworkVolume = int64(v)
+			desire[i].NetworkVolume = int32(v)
 		}
 		if policyType, ok := annotations[ServiceAnnotationLoadBalancerPolicyType]; ok {
 			desire[i].PolicyType = policyType
@@ -141,22 +143,23 @@ func (c *Cloud) EnsureLoadBalancer(ctx context.Context, clusterName string, serv
 			continue
 		}
 
-		desire[i].LoadBalancerPort = int64(port.Port)
-		desire[i].InstancePort = int64(port.NodePort)
+		desire[i].LoadBalancerPort = int32(port.Port)
+		desire[i].InstancePort = int32(port.NodePort)
 
 		// health check
-		if interval, ok := annotations[ServiceAnnotationLoadBalancerHCInterval]; ok {
-			i, err := strconv.Atoi(interval)
+		if strInterval, ok := annotations[ServiceAnnotationLoadBalancerHCInterval]; ok {
+			interval, err := strconv.Atoi(strInterval)
 			if err != nil {
 				return nil, fmt.Errorf(
 					"health check interval %q is invalid for service %q: %v",
-					interval, service.GetName(), err,
+					strInterval, service.GetName(), err,
 				)
 			}
-			desire[i].HealthCheckInterval = int64(i)
+			desire[i].HealthCheckInterval = int32(interval)
 		} else {
 			desire[i].HealthCheckInterval = defaultHealthCheckInterval
 		}
+
 		if unhealthyThreshold, ok := annotations[ServiceAnnotationLoadBalancerHCUnhealthyThreshold]; ok {
 			t, err := strconv.Atoi(unhealthyThreshold)
 			if err != nil {
@@ -165,10 +168,11 @@ func (c *Cloud) EnsureLoadBalancer(ctx context.Context, clusterName string, serv
 					unhealthyThreshold, service.GetName(), err,
 				)
 			}
-			desire[i].HealthCheckUnhealthyThreshold = int64(t)
+			desire[i].HealthCheckUnhealthyThreshold = int32(t)
 		} else {
 			desire[i].HealthCheckUnhealthyThreshold = defaultHealthCheckUnhealthyThreshold
 		}
+
 		if proto, ok := annotations[ServiceAnnotationLoadBalancerHCProtocol]; ok {
 			switch strings.ToUpper(proto) {
 			case "TCP":

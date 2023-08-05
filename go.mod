@@ -7,6 +7,7 @@ require (
 	github.com/mattn/go-shellwords v1.0.5
 	github.com/nifcloud/nifcloud-sdk-go v1.21.0
 	github.com/prometheus/client_golang v1.14.0
+	github.com/samber/lo v1.38.1
 	k8s.io/api v0.27.4
 	k8s.io/apimachinery v0.27.4
 	k8s.io/cloud-provider v0.27.4
@@ -82,6 +83,7 @@ require (
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.19.0 // indirect
 	golang.org/x/crypto v0.1.0 // indirect
+	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e // indirect
 	golang.org/x/net v0.8.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20220223155221-ee480838109b // indirect
 	golang.org/x/sync v0.1.0 // indirect

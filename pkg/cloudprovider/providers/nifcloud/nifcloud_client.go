@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 
 	"github.com/aws/smithy-go"
 	"github.com/nifcloud/nifcloud-sdk-go/nifcloud"
@@ -211,9 +212,12 @@ func (c *nifcloudAPIClient) DescribeLoadBalancers(ctx context.Context, name stri
 
 		filters := []string{}
 		for _, filter := range lbDesc.Filter.IPAddresses {
+			if nifcloud.ToString(filter.IPAddress) == filterAnyIPAddresses {
+				continue
+			}
 			filters = append(filters, nifcloud.ToString(filter.IPAddress))
 		}
-		lb.Filters = filters
+		lb.Filters = sort.StringSlice(filters)
 
 		result = append(result, lb)
 	}

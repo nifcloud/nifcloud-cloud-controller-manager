@@ -147,12 +147,12 @@ func (c *Cloud) EnsureLoadBalancer(ctx context.Context, clusterName string, serv
 		desire[i].InstancePort = int32(port.NodePort)
 
 		// health check
-		if interval, ok := annotations[ServiceAnnotationLoadBalancerHCInterval]; ok {
-			i, err := strconv.Atoi(interval)
+		if strInterval, ok := annotations[ServiceAnnotationLoadBalancerHCInterval]; ok {
+			interval, err := strconv.Atoi(strInterval)
 			if err != nil {
 				return nil, fmt.Errorf(
 					"health check interval %q is invalid for service %q: %v",
-					interval, service.GetName(), err,
+					strInterval, service.GetName(), err,
 				)
 			}
 			desire[i].HealthCheckInterval = int32(interval)

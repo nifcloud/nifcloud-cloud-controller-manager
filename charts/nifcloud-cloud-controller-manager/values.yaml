@@ -5,7 +5,7 @@
 replicaCount: 1
 
 image:
-  repository: ghcr.io/aokumasan/nifcloud-cloud-controller-manager
+  repository: ghcr.io/nifcloud/nifcloud-cloud-controller-manager
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""

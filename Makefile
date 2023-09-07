@@ -1,5 +1,5 @@
-PKG:=github.com/aokumasan/nifcloud-cloud-controller-manager
-IMAGE:=ghcr.io/aokumasan/nifcloud-cloud-controller-manager
+PKG:=github.com/nifcloud/nifcloud-cloud-controller-manager
+IMAGE:=ghcr.io/nifcloud/nifcloud-cloud-controller-manager
 VERSION:=$(shell git describe --tags --dirty --match="v*")
 LDFLAGS:="-X k8s.io/component-base/version.gitVersion=$(VERSION) -s -w"
 

@@ -1,4 +1,4 @@
-module github.com/aokumasan/nifcloud-cloud-controller-manager
+module github.com/nifcloud/nifcloud-cloud-controller-manager
 
 go 1.20
 

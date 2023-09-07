@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/aokumasan/nifcloud-cloud-controller-manager/pkg/cloudprovider/providers/nifcloud"
+	"github.com/nifcloud/nifcloud-cloud-controller-manager/pkg/cloudprovider/providers/nifcloud"
 	"k8s.io/apimachinery/pkg/util/wait"
 	cloudprovider "k8s.io/cloud-provider"
 	"k8s.io/cloud-provider/app"

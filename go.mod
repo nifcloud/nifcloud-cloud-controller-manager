@@ -3,10 +3,11 @@ module github.com/nifcloud/nifcloud-cloud-controller-manager
 go 1.20
 
 require (
-	github.com/aws/smithy-go v1.14.0
-	github.com/nifcloud/nifcloud-sdk-go v1.21.0
+	github.com/aws/smithy-go v1.14.2
+	github.com/nifcloud/nifcloud-sdk-go v1.22.1
 	github.com/prometheus/client_golang v1.16.0
 	github.com/samber/lo v1.38.1
+	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e
 	k8s.io/api v0.28.3
 	k8s.io/apimachinery v0.28.3
 	k8s.io/cloud-provider v0.28.3
@@ -80,7 +81,6 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.19.0 // indirect
 	golang.org/x/crypto v0.15.0 // indirect
-	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e // indirect
 	golang.org/x/net v0.18.0 // indirect
 	golang.org/x/oauth2 v0.11.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect

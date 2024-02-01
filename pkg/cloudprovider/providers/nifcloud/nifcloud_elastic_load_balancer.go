@@ -35,7 +35,7 @@ func (c *Cloud) getElasticLoadBalancer(ctx context.Context, clusterName string, 
 	}
 
 	if len(loadBalancers) == 0 {
-		return nil, false, fmt.Errorf("not found load balancer: %q", loadBalancerName)
+		return nil, false, fmt.Errorf("not found elastic load balancer: %q", loadBalancerName)
 	}
 
 	// return load balancer status

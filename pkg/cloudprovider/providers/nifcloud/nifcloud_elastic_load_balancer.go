@@ -20,7 +20,7 @@ func isElasticLoadBalancer(annotations map[string]string) bool {
 	return annotations[ServiceAnnotationLoadBalancerType] == "elb"
 }
 
-func isPrivateNetworkID(networkID string) bool {
+func isPrivateLanNetworkID(networkID string) bool {
 	return networkID != commonGlobalNetworkID && networkID != commonPrivateNetworkID
 }
 
@@ -322,7 +322,7 @@ func NewElasticLoadBalancerFromService(loadBalancerName string, instances []Inst
 			networkInterface.IPAddress = ipAddress
 		}
 
-		if isPrivateNetworkID(networkInterface.NetworkId) {
+		if isPrivateLanNetworkID(networkInterface.NetworkId) {
 			separatedSystemIPAdresses := []string{}
 			if systemIPAddresses, ok := annotations[ServiceAnnotationLoadBalancerNetworkInterface1SystemIPAddresses]; ok {
 				separatedSystemIPAdresses = strings.Split(systemIPAddresses, ",")
@@ -352,7 +352,7 @@ func NewElasticLoadBalancerFromService(loadBalancerName string, instances []Inst
 			networkInterface.IPAddress = ipAddress
 		}
 
-		if isPrivateNetworkID(networkInterface.NetworkId) {
+		if isPrivateLanNetworkID(networkInterface.NetworkId) {
 			separatedSystemIPAdresses := []string{}
 			if systemIPAddresses, ok := annotations[ServiceAnnotationLoadBalancerNetworkInterface2SystemIPAddresses]; ok {
 				separatedSystemIPAdresses = strings.Split(systemIPAddresses, ",")

@@ -23,7 +23,7 @@ const (
 	defaultHealthCheckTarget             = "TCP"
 
 	// default network interface
-	defaultNetworkInterface = "net-COMMON_GLOBAL"
+	elasticLoadBalancerDefaultNetworkInterface = commonGlobalNetworkID
 
 	// ServiceAnnotationLoadBalancerNetworkVolume is the annotation that specify network volume for load balancer
 	// valid volume is 10, 20, ..., 2000

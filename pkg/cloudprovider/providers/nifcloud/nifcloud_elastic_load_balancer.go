@@ -385,7 +385,7 @@ func NewElasticLoadBalancerFromService(loadBalancerName string, instances []Inst
 		}
 	} else {
 		networkInterface := NetworkInterface{
-			NetworkId:    defaultNetworkInterface,
+			NetworkId:    elasticLoadBalancerDefaultNetworkInterface,
 			IsVipNetwork: true,
 		}
 		for i := range desire {

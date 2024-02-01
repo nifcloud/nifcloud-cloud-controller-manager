@@ -65,8 +65,8 @@ const (
 
 	// ServiceAnnotationLoadBalancerNetworkInterface(1-2) is the annotation that specify network interface of elastic load balancer
 	// net-COMMON_GLOBAL, net-COMMON_PRIVATE or network ID of private LAN
-	ServiceAnnotationLoadBalancerNetworkInterface1 = "service.beta.kubernetes.io/nifcloud-load-balancer-network-interface-1"
-	ServiceAnnotationLoadBalancerNetworkInterface2 = "service.beta.kubernetes.io/nifcloud-load-balancer-network-interface-2"
+	ServiceAnnotationLoadBalancerNetworkInterface1 = "service.beta.kubernetes.io/nifcloud-load-balancer-network-interface-1-network-id"
+	ServiceAnnotationLoadBalancerNetworkInterface2 = "service.beta.kubernetes.io/nifcloud-load-balancer-network-interface-2-network-id"
 
 	// ServiceAnnotationLoadBalancerNetworkInterface(1-2)IPAddress is the annotation that specify IPAdress of elastic load balancer
 	// Set IP address only when corresponding network interface is private

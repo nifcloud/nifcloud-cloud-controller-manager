@@ -61,7 +61,7 @@ func (c *Cloud) ensureElasticLoadBalancer(ctx context.Context, loadBalancerName 
 		if strings.Contains(err.Error(), "NotFound") {
 			// create all load balancers
 			var vip string
-			var networkInterface []NetworkInterface
+			var networkInterfaces []NetworkInterface
 			for i, lb := range desire {
 				klog.Infof("Creating ElasticLoadBalancer %q (%d -> %d)", lb.Name, lb.LoadBalancerPort, lb.InstancePort)
 				if i == 0 {
@@ -74,14 +74,14 @@ func (c *Cloud) ensureElasticLoadBalancer(ctx context.Context, loadBalancerName 
 						return nil, fmt.Errorf("failed to describe elastic load balancer %q: %w", loadBalancerName, err)
 					}
 					vip = current[0].VIP
-					networkInterface = current[0].NetworkInterface
+					networkInterfaces = current[0].NetworkInterfaces
 				} else {
 					if err := c.client.RegisterPortWithElasticLoadBalancer(ctx, &lb); err != nil {
 						return nil, fmt.Errorf("failed to add port to elastic load balancer: %w", err)
 					}
 				}
 				lb.VIP = vip
-				lb.NetworkInterface = networkInterface
+				lb.NetworkInterfaces = networkInterfaces
 				if err := c.allowSecurityGroupRulesFromElasticLoadBalancer(ctx, &lb, lb.BalancingTargets); err != nil {
 					return nil, fmt.Errorf("failed to allow security group rules from elastic load balancer: %w", err)
 				}
@@ -95,7 +95,7 @@ func (c *Cloud) ensureElasticLoadBalancer(ctx context.Context, loadBalancerName 
 
 	for i := range desire {
 		desire[i].VIP = current[0].VIP
-		desire[i].NetworkInterface = current[0].NetworkInterface
+		desire[i].NetworkInterfaces = current[0].NetworkInterfaces
 	}
 
 	loadBalancerResourceChanged := false
@@ -375,7 +375,7 @@ func NewElasticLoadBalancerFromService(loadBalancerName string, instances []Inst
 
 	if len(networkInterfaces) == 1 || len(networkInterfaces) == 2 {
 		for i := range desire {
-			desire[i].NetworkInterface = networkInterfaces
+			desire[i].NetworkInterfaces = networkInterfaces
 		}
 	} else {
 		networkInterface := NetworkInterface{
@@ -383,7 +383,7 @@ func NewElasticLoadBalancerFromService(loadBalancerName string, instances []Inst
 			IsVipNetwork: true,
 		}
 		for i := range desire {
-			desire[i].NetworkInterface = append(desire[i].NetworkInterface, networkInterface)
+			desire[i].NetworkInterfaces = append(desire[i].NetworkInterfaces, networkInterface)
 		}
 	}
 
@@ -468,7 +468,7 @@ func (c *Cloud) securityGroupRulesOfElasticLoadBalancer(ctx context.Context, ela
 
 	healthCheckProtocol, _ := separateHealthCheckTarget(elasticLoadBalancer.HealthCheckTarget)
 
-	if len(elasticLoadBalancer.NetworkInterface) == 1 {
+	if len(elasticLoadBalancer.NetworkInterfaces) == 1 {
 		// one arm
 		securityGroupRule := SecurityGroupRule{
 			IpProtocol: elasticLoadBalancer.Protocol,
@@ -486,7 +486,7 @@ func (c *Cloud) securityGroupRulesOfElasticLoadBalancer(ctx context.Context, ela
 				IpRanges:   VIPRanges,
 			}
 			securityGroupRules = append(securityGroupRules, IPAddressRule)
-			for _, systemIPAddress := range elasticLoadBalancer.NetworkInterface[0].SystemIpAddresses {
+			for _, systemIPAddress := range elasticLoadBalancer.NetworkInterfaces[0].SystemIpAddresses {
 				systemIPAddressRule := SecurityGroupRule{
 					IpProtocol: healthCheckProtocol,
 					InOut:      "IN",
@@ -505,7 +505,7 @@ func (c *Cloud) securityGroupRulesOfElasticLoadBalancer(ctx context.Context, ela
 				}
 				securityGroupRules = append(securityGroupRules, IPAddressRule)
 			}
-			for _, systemIPAddress := range elasticLoadBalancer.NetworkInterface[0].SystemIpAddresses {
+			for _, systemIPAddress := range elasticLoadBalancer.NetworkInterfaces[0].SystemIpAddresses {
 				systemIPAddressRule := SecurityGroupRule{
 					IpProtocol: healthCheckProtocol,
 					FromPort:   elasticLoadBalancer.InstancePort,
@@ -517,14 +517,14 @@ func (c *Cloud) securityGroupRulesOfElasticLoadBalancer(ctx context.Context, ela
 			}
 		}
 
-	} else if len(elasticLoadBalancer.NetworkInterface) == 2 {
+	} else if len(elasticLoadBalancer.NetworkInterfaces) == 2 {
 		// two arm
 		if healthCheckProtocol == "ICMP" {
 			var notVIPNetworkInterface NetworkInterface
-			if elasticLoadBalancer.NetworkInterface[0].IsVipNetwork {
-				notVIPNetworkInterface = elasticLoadBalancer.NetworkInterface[1]
+			if elasticLoadBalancer.NetworkInterfaces[0].IsVipNetwork {
+				notVIPNetworkInterface = elasticLoadBalancer.NetworkInterfaces[1]
 			} else {
-				notVIPNetworkInterface = elasticLoadBalancer.NetworkInterface[0]
+				notVIPNetworkInterface = elasticLoadBalancer.NetworkInterfaces[0]
 			}
 
 			IPAddressRule := SecurityGroupRule{
@@ -544,10 +544,10 @@ func (c *Cloud) securityGroupRulesOfElasticLoadBalancer(ctx context.Context, ela
 			}
 		} else {
 			var notVIPNetworkInterface NetworkInterface
-			if elasticLoadBalancer.NetworkInterface[0].IsVipNetwork {
-				notVIPNetworkInterface = elasticLoadBalancer.NetworkInterface[1]
+			if elasticLoadBalancer.NetworkInterfaces[0].IsVipNetwork {
+				notVIPNetworkInterface = elasticLoadBalancer.NetworkInterfaces[1]
 			} else {
-				notVIPNetworkInterface = elasticLoadBalancer.NetworkInterface[0]
+				notVIPNetworkInterface = elasticLoadBalancer.NetworkInterfaces[0]
 			}
 
 			IPAddressRule := SecurityGroupRule{
@@ -571,7 +571,7 @@ func (c *Cloud) securityGroupRulesOfElasticLoadBalancer(ctx context.Context, ela
 			}
 		}
 	} else {
-		return nil, fmt.Errorf("the number of NetworkInterfaces (%d) is invalid", len(elasticLoadBalancer.NetworkInterface))
+		return nil, fmt.Errorf("the number of NetworkInterfaces (%d) is invalid", len(elasticLoadBalancer.NetworkInterfaces))
 	}
 
 	return securityGroupRules, nil

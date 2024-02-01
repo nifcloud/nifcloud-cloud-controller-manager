@@ -77,7 +77,7 @@ type ElasticLoadBalancer struct {
 	HealthCheckTarget             string
 	HealthCheckInterval           int32
 	HealthCheckUnhealthyThreshold int32
-	NetworkInterface              []NetworkInterface
+	NetworkInterfaces            []NetworkInterface
 }
 
 // NetworkInterface is network interface detail
@@ -604,7 +604,7 @@ func (c *nifcloudAPIClient) DescribeElasticLoadBalancers(ctx context.Context, na
 					SystemIpAddresses: systemIPAddresses,
 					IsVipNetwork:      nifcloud.ToBool(networkInterfaceDesc.IsVipNetwork),
 				}
-				elb.NetworkInterface = append(elb.NetworkInterface, networkInterface)
+				elb.NetworkInterfaces = append(elb.NetworkInterfaces, networkInterface)
 			}
 
 			result = append(result, elb)
@@ -671,7 +671,7 @@ func (c *nifcloudAPIClient) createElasticLoadBalancer(ctx context.Context, elast
 	}
 
 	input.NetworkInterface = []types.RequestNetworkInterfaceOfNiftyCreateElasticLoadBalancer{}
-	for _, networkInterface := range elasticLoadBalancer.NetworkInterface {
+	for _, networkInterface := range elasticLoadBalancer.NetworkInterfaces {
 		systemIPAdresses := []types.RequestSystemIpAddresses{}
 		for _, systemIPAdress := range networkInterface.SystemIpAddresses {
 			systemIPAdresses = append(systemIPAdresses, types.RequestSystemIpAddresses{

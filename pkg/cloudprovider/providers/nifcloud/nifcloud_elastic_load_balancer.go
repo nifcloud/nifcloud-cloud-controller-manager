@@ -323,15 +323,12 @@ func NewElasticLoadBalancerFromService(loadBalancerName string, instances []Inst
 		}
 
 		if isPrivateNetworkID(networkInterface.NetworkId) {
-			systemIPAdresses := []string{}
-			if systemIPAddress1, ok := annotations[ServiceAnnotationLoadBalancerNetworkInterface1SystemIPAddress1]; ok {
-				systemIPAdresses = append(systemIPAdresses, systemIPAddress1)
+			separatedSystemIPAdresses := []string{}
+			if systemIPAddresses, ok := annotations[ServiceAnnotationLoadBalancerNetworkInterface1SystemIPAddresses]; ok {
+				separatedSystemIPAdresses = strings.Split(systemIPAddresses, ",")
 			}
-			if systemIPAddress2, ok := annotations[ServiceAnnotationLoadBalancerNetworkInterface1SystemIPAddress2]; ok {
-				systemIPAdresses = append(systemIPAdresses, systemIPAddress2)
-			}
-			if len(systemIPAdresses) == 2 {
-				networkInterface.SystemIpAddresses = systemIPAdresses
+			if len(separatedSystemIPAdresses) == 2 {
+				networkInterface.SystemIpAddresses = separatedSystemIPAdresses
 			} else {
 				return nil, fmt.Errorf("system ip address require two value")
 			}
@@ -356,15 +353,12 @@ func NewElasticLoadBalancerFromService(loadBalancerName string, instances []Inst
 		}
 
 		if isPrivateNetworkID(networkInterface.NetworkId) {
-			systemIPAdresses := []string{}
-			if systemIPAddress1, ok := annotations[ServiceAnnotationLoadBalancerNetworkInterface2SystemIPAddress1]; ok {
-				systemIPAdresses = append(systemIPAdresses, systemIPAddress1)
+			separatedSystemIPAdresses := []string{}
+			if systemIPAddresses, ok := annotations[ServiceAnnotationLoadBalancerNetworkInterface2SystemIPAddresses]; ok {
+				separatedSystemIPAdresses = strings.Split(systemIPAddresses, ",")
 			}
-			if systemIPAddress2, ok := annotations[ServiceAnnotationLoadBalancerNetworkInterface2SystemIPAddress2]; ok {
-				systemIPAdresses = append(systemIPAdresses, systemIPAddress2)
-			}
-			if len(systemIPAdresses) == 2 {
-				networkInterface.SystemIpAddresses = systemIPAdresses
+			if len(separatedSystemIPAdresses) == 2 {
+				networkInterface.SystemIpAddresses = separatedSystemIPAdresses
 			} else {
 				return nil, fmt.Errorf("system ip address require two value")
 			}

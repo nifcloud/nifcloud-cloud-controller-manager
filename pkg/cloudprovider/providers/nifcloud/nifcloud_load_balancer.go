@@ -73,12 +73,10 @@ const (
 	ServiceAnnotationLoadBalancerNetworkInterface1IPAddress = "service.beta.kubernetes.io/nifcloud-load-balancer-network-interface-1-ip-address"
 	ServiceAnnotationLoadBalancerNetworkInterface2IPAddress = "service.beta.kubernetes.io/nifcloud-load-balancer-network-interface-2-ip-address"
 
-	// ServiceAnnotationLoadBalancerNetworkInterface(1-2)SystemIPAddress(1-2) is the annotation that specify SystemIPAdress of elastic load balancer
+	// ServiceAnnotationLoadBalancerNetworkInterface(1-2)SystemIPAddresses is the annotation that specify SystemIPAdresses of elastic load balancer
 	// Set system IP address only when corresponding network interface is private
-	ServiceAnnotationLoadBalancerNetworkInterface1SystemIPAddress1 = "service.beta.kubernetes.io/nifcloud-load-balancer-network-interface-1-system-ip-address-1"
-	ServiceAnnotationLoadBalancerNetworkInterface1SystemIPAddress2 = "service.beta.kubernetes.io/nifcloud-load-balancer-network-interface-1-system-ip-address-2"
-	ServiceAnnotationLoadBalancerNetworkInterface2SystemIPAddress1 = "service.beta.kubernetes.io/nifcloud-load-balancer-network-interface-2-system-ip-address-1"
-	ServiceAnnotationLoadBalancerNetworkInterface2SystemIPAddress2 = "service.beta.kubernetes.io/nifcloud-load-balancer-network-interface-2-system-ip-address-2"
+	ServiceAnnotationLoadBalancerNetworkInterface1SystemIPAddresses = "service.beta.kubernetes.io/nifcloud-load-balancer-network-interface-1-system-ip-addresses"
+	ServiceAnnotationLoadBalancerNetworkInterface2SystemIPAddresses = "service.beta.kubernetes.io/nifcloud-load-balancer-network-interface-2-system-ip-addresses"
 
 	// ServiceAnnotationLoadBalancerVipNetwork is the annotation that specify VIP network
 	// valid values are '1' or '2'

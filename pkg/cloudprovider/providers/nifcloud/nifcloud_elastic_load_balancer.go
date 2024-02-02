@@ -39,7 +39,7 @@ func (c *Cloud) getElasticLoadBalancer(ctx context.Context, clusterName string, 
 	}
 
 	// return load balancer status
-	return toElasticLoadBalancerStatus(loadBalancers[0].VIP), true, nil
+	return toLoadBalancerStatus(loadBalancers[0].VIP), true, nil
 }
 
 func (c *Cloud) getElasticLoadBalancerName(ctx context.Context, clusterName string, service *v1.Service) string {
@@ -86,7 +86,7 @@ func (c *Cloud) ensureElasticLoadBalancer(ctx context.Context, loadBalancerName 
 					return nil, fmt.Errorf("failed to allow security group rules from elastic load balancer: %w", err)
 				}
 			}
-			return toElasticLoadBalancerStatus(vip), nil
+			return toLoadBalancerStatus(vip), nil
 		}
 		return nil, fmt.Errorf("failed to describe elastic load balancer %q: %w", loadBalancerName, err)
 	}
@@ -169,7 +169,7 @@ func (c *Cloud) ensureElasticLoadBalancer(ctx context.Context, loadBalancerName 
 		}
 	}
 
-	return toElasticLoadBalancerStatus(current[0].VIP), nil
+	return toLoadBalancerStatus(current[0].VIP), nil
 }
 
 func NewElasticLoadBalancerFromService(loadBalancerName string, instances []Instance, service *v1.Service) ([]ElasticLoadBalancer, error) {
@@ -681,14 +681,4 @@ func elasticLoadBalancingTargetsDifferences(target, other []Instance) []Instance
 	}
 
 	return diff
-}
-
-func toElasticLoadBalancerStatus(vip string) *v1.LoadBalancerStatus {
-	return &v1.LoadBalancerStatus{
-		Ingress: []v1.LoadBalancerIngress{
-			{
-				IP: vip,
-			},
-		},
-	}
 }

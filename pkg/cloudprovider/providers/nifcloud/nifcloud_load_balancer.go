@@ -14,13 +14,16 @@ import (
 
 const (
 	// limits for NIFCLOUD load balancer
-	maxLoadBalanacerNameLength  = 15
+	maxLoadBalancerNameLength   = 15
 	maxPortCountPerLoadBalancer = 3
 
 	// default health check parameter values
 	defaultHealthCheckInterval           = 10
 	defaultHealthCheckUnhealthyThreshold = 1
 	defaultHealthCheckTarget             = "TCP"
+
+	// default network interface
+	elasticLoadBalancerDefaultNetworkInterface = commonGlobalNetworkID
 
 	// ServiceAnnotationLoadBalancerNetworkVolume is the annotation that specify network volume for load balancer
 	// valid volume is 10, 20, ..., 2000
@@ -55,10 +58,37 @@ const (
 	// ServiceAnnotationLoadBalancerHCInterval is the annotation that specify interval seconds for health check
 	// See https://pfs.nifcloud.com/api/rest/ConfigureHealthCheck.htm
 	ServiceAnnotationLoadBalancerHCInterval = "service.beta.kubernetes.io/nifcloud-load-balancer-healthcheck-interval"
+
+	// ServiceAnnotationLoadBalancerType is the annotation that specify using load balancer type
+	// valid values are 'lb' or 'elb'
+	ServiceAnnotationLoadBalancerType = "service.beta.kubernetes.io/nifcloud-load-balancer-type"
+
+	// ServiceAnnotationLoadBalancerNetworkInterface(1-2) is the annotation that specify network interface of elastic load balancer
+	// net-COMMON_GLOBAL, net-COMMON_PRIVATE or network ID of private LAN
+	ServiceAnnotationLoadBalancerNetworkInterface1 = "service.beta.kubernetes.io/nifcloud-load-balancer-network-interface-1-network-id"
+	ServiceAnnotationLoadBalancerNetworkInterface2 = "service.beta.kubernetes.io/nifcloud-load-balancer-network-interface-2-network-id"
+
+	// ServiceAnnotationLoadBalancerNetworkInterface(1-2)IPAddress is the annotation that specify IPAdress of elastic load balancer
+	// Set IP address only when corresponding network interface is private
+	ServiceAnnotationLoadBalancerNetworkInterface1IPAddress = "service.beta.kubernetes.io/nifcloud-load-balancer-network-interface-1-ip-address"
+	ServiceAnnotationLoadBalancerNetworkInterface2IPAddress = "service.beta.kubernetes.io/nifcloud-load-balancer-network-interface-2-ip-address"
+
+	// ServiceAnnotationLoadBalancerNetworkInterface(1-2)SystemIPAddresses is the annotation that specify SystemIPAdresses of elastic load balancer
+	// Set system IP address only when corresponding network interface is private
+	ServiceAnnotationLoadBalancerNetworkInterface1SystemIPAddresses = "service.beta.kubernetes.io/nifcloud-load-balancer-network-interface-1-system-ip-addresses"
+	ServiceAnnotationLoadBalancerNetworkInterface2SystemIPAddresses = "service.beta.kubernetes.io/nifcloud-load-balancer-network-interface-2-system-ip-addresses"
+
+	// ServiceAnnotationLoadBalancerVipNetwork is the annotation that specify VIP network
+	// valid values are '1' or '2'
+	ServiceAnnotationLoadBalancerVipNetwork = "service.beta.kubernetes.io/nifcloud-load-balancer-vip-network"
 )
 
 // GetLoadBalancer returns whether the specified load balancer exists, and if so, what its status is
 func (c *Cloud) GetLoadBalancer(ctx context.Context, clusterName string, service *v1.Service) (status *v1.LoadBalancerStatus, exists bool, err error) {
+	if isElasticLoadBalancer(service.Annotations) {
+		return c.getElasticLoadBalancer(ctx, clusterName, service)
+	}
+
 	loadBalancerName := c.GetLoadBalancerName(ctx, clusterName, service)
 	loadBalancers, err := c.client.DescribeLoadBalancers(ctx, loadBalancerName)
 	if err != nil {
@@ -75,7 +105,7 @@ func (c *Cloud) GetLoadBalancer(ctx context.Context, clusterName string, service
 
 // GetLoadBalancerName returns the name of the load balancer
 func (c *Cloud) GetLoadBalancerName(ctx context.Context, clusterName string, service *v1.Service) string {
-	return strings.Replace(string(service.UID), "-", "", -1)[:maxLoadBalanacerNameLength]
+	return strings.Replace(string(service.UID), "-", "", -1)[:maxLoadBalancerNameLength]
 }
 
 // EnsureLoadBalancer creates a new load balancer 'name', or updates the existing one. Returns the status of the balancer
@@ -101,121 +131,133 @@ func (c *Cloud) EnsureLoadBalancer(ctx context.Context, clusterName string, serv
 		return nil, fmt.Errorf("could not fetch instances info for %v: %v", instanceIDs, err)
 	}
 
-	desire := make([]LoadBalancer, portCount)
 	loadBalancerName := c.GetLoadBalancerName(ctx, clusterName, service)
-	for i, port := range service.Spec.Ports {
-		// basic load balancer options
-		desire[i].Name = loadBalancerName
-		annotations := service.Annotations
-		if rawBalancingType, ok := annotations[ServiceAnnotationLoadBalancerBalancingType]; ok {
-			balancingType, err := strconv.Atoi(rawBalancingType)
-			if err != nil {
-				return nil, fmt.Errorf(
-					"balancing type %q is invalid for service %q: %v",
-					rawBalancingType, service.GetName(), err,
-				)
-			}
-			desire[i].BalancingType = int32(balancingType)
-		}
 
-		if accountingType, ok := annotations[ServiceAnnotationLoadBalancerAccountingType]; ok {
-			desire[i].AccountingType = accountingType
-		}
-
-		if networkVolume, ok := annotations[ServiceAnnotationLoadBalancerNetworkVolume]; ok {
-			v, err := strconv.Atoi(networkVolume)
-			if err != nil {
-				return nil, fmt.Errorf(
-					"network volume %q is invalid for service %q: %v",
-					networkVolume, service.GetName(), err,
-				)
-			}
-			desire[i].NetworkVolume = int32(v)
-		}
-		if policyType, ok := annotations[ServiceAnnotationLoadBalancerPolicyType]; ok {
-			desire[i].PolicyType = policyType
-		}
-
-		if port.Protocol != v1.ProtocolTCP {
-			return nil, fmt.Errorf("only TCP load balancer is supported")
-		}
-		if port.NodePort == 0 {
-			klog.Errorf("Ignoring port without NodePort defined: %v", port)
-			continue
-		}
-
-		desire[i].LoadBalancerPort = int32(port.Port)
-		desire[i].InstancePort = int32(port.NodePort)
-
-		// health check
-		if strInterval, ok := annotations[ServiceAnnotationLoadBalancerHCInterval]; ok {
-			interval, err := strconv.Atoi(strInterval)
-			if err != nil {
-				return nil, fmt.Errorf(
-					"health check interval %q is invalid for service %q: %v",
-					strInterval, service.GetName(), err,
-				)
-			}
-			desire[i].HealthCheckInterval = int32(interval)
-		} else {
-			desire[i].HealthCheckInterval = defaultHealthCheckInterval
-		}
-
-		if unhealthyThreshold, ok := annotations[ServiceAnnotationLoadBalancerHCUnhealthyThreshold]; ok {
-			t, err := strconv.Atoi(unhealthyThreshold)
-			if err != nil {
-				return nil, fmt.Errorf(
-					"unhealthy threshold %q is invalid for service %q: %v",
-					unhealthyThreshold, service.GetName(), err,
-				)
-			}
-			desire[i].HealthCheckUnhealthyThreshold = int32(t)
-		} else {
-			desire[i].HealthCheckUnhealthyThreshold = defaultHealthCheckUnhealthyThreshold
-		}
-
-		if proto, ok := annotations[ServiceAnnotationLoadBalancerHCProtocol]; ok {
-			switch strings.ToUpper(proto) {
-			case "TCP":
-				desire[i].HealthCheckTarget = fmt.Sprintf("TCP:%d", port.NodePort)
-			case "ICMP":
-				desire[i].HealthCheckTarget = "ICMP"
-			default:
-				return nil, fmt.Errorf(
-					"health check protocol %q is invalid for service %q",
-					proto, service.GetName(),
-				)
-			}
-		} else {
-			desire[i].HealthCheckTarget = fmt.Sprintf("%s:%d", defaultHealthCheckTarget, port.NodePort)
-		}
-
-		// balancing targets
-		desire[i].BalancingTargets = instances
-
-		// filter
-		sourceRanges, err := servicehelpers.GetLoadBalancerSourceRanges(service)
+	if isElasticLoadBalancer(service.Annotations) {
+		elb, err := NewElasticLoadBalancerFromService(loadBalancerName, instances, service)
 		if err != nil {
 			return nil, err
 		}
-		filters := []string{}
-		if !servicehelpers.IsAllowAll(sourceRanges) {
-			for cidr := range sourceRanges {
-				if strings.HasSuffix(cidr, "/32") {
-					filters = append(filters, strings.TrimSuffix(cidr, "/32"))
-				} else {
-					filters = append(filters, strings.Replace(cidr, "/32", "", 1))
+		return c.ensureElasticLoadBalancer(ctx, loadBalancerName, elb)
+	} else {
+		desire := make([]LoadBalancer, portCount)
+		for i, port := range service.Spec.Ports {
+			// basic load balancer options
+			desire[i].Name = loadBalancerName
+			annotations := service.Annotations
+			if rawBalancingType, ok := annotations[ServiceAnnotationLoadBalancerBalancingType]; ok {
+				balancingType, err := strconv.Atoi(rawBalancingType)
+				if err != nil {
+					return nil, fmt.Errorf(
+						"balancing type %q is invalid for service %q: %v",
+						rawBalancingType, service.GetName(), err,
+					)
+				}
+				desire[i].BalancingType = int32(balancingType)
+			}
+
+			if accountingType, ok := annotations[ServiceAnnotationLoadBalancerAccountingType]; ok {
+				desire[i].AccountingType = accountingType
+			}
+
+			if networkVolume, ok := annotations[ServiceAnnotationLoadBalancerNetworkVolume]; ok {
+				v, err := strconv.Atoi(networkVolume)
+				if err != nil {
+					return nil, fmt.Errorf(
+						"network volume %q is invalid for service %q: %v",
+						networkVolume, service.GetName(), err,
+					)
+				}
+				desire[i].NetworkVolume = int32(v)
+			}
+			if policyType, ok := annotations[ServiceAnnotationLoadBalancerPolicyType]; ok {
+				desire[i].PolicyType = policyType
+			}
+
+			if port.Protocol != v1.ProtocolTCP {
+				return nil, fmt.Errorf("only TCP load balancer is supported")
+			}
+			if port.NodePort == 0 {
+				klog.Errorf("Ignoring port without NodePort defined: %v", port)
+				continue
+			}
+
+			desire[i].LoadBalancerPort = int32(port.Port)
+			desire[i].InstancePort = int32(port.NodePort)
+
+			// health check
+			if strInterval, ok := annotations[ServiceAnnotationLoadBalancerHCInterval]; ok {
+				interval, err := strconv.Atoi(strInterval)
+				if err != nil {
+					return nil, fmt.Errorf(
+						"health check interval %q is invalid for service %q: %v",
+						strInterval, service.GetName(), err,
+					)
+				}
+				desire[i].HealthCheckInterval = int32(interval)
+			} else {
+				desire[i].HealthCheckInterval = defaultHealthCheckInterval
+			}
+
+			if unhealthyThreshold, ok := annotations[ServiceAnnotationLoadBalancerHCUnhealthyThreshold]; ok {
+				t, err := strconv.Atoi(unhealthyThreshold)
+				if err != nil {
+					return nil, fmt.Errorf(
+						"unhealthy threshold %q is invalid for service %q: %v",
+						unhealthyThreshold, service.GetName(), err,
+					)
+				}
+				desire[i].HealthCheckUnhealthyThreshold = int32(t)
+			} else {
+				desire[i].HealthCheckUnhealthyThreshold = defaultHealthCheckUnhealthyThreshold
+			}
+
+			if proto, ok := annotations[ServiceAnnotationLoadBalancerHCProtocol]; ok {
+				switch strings.ToUpper(proto) {
+				case "TCP":
+					desire[i].HealthCheckTarget = fmt.Sprintf("TCP:%d", port.NodePort)
+				case "ICMP":
+					desire[i].HealthCheckTarget = "ICMP"
+				default:
+					return nil, fmt.Errorf(
+						"health check protocol %q is invalid for service %q",
+						proto, service.GetName(),
+					)
+				}
+			} else {
+				desire[i].HealthCheckTarget = fmt.Sprintf("%s:%d", defaultHealthCheckTarget, port.NodePort)
+			}
+
+			// balancing targets
+			desire[i].BalancingTargets = instances
+
+			// filter
+			sourceRanges, err := servicehelpers.GetLoadBalancerSourceRanges(service)
+			if err != nil {
+				return nil, err
+			}
+			filters := []string{}
+			if !servicehelpers.IsAllowAll(sourceRanges) {
+				for cidr := range sourceRanges {
+					if strings.HasSuffix(cidr, "/32") {
+						filters = append(filters, strings.TrimSuffix(cidr, "/32"))
+					} else {
+						filters = append(filters, strings.Replace(cidr, "/32", "", 1))
+					}
 				}
 			}
+			desire[i].Filters = sort.StringSlice(filters)
 		}
-		desire[i].Filters = sort.StringSlice(filters)
+		return c.ensureLoadBalancer(ctx, desire)
 	}
-
-	return c.ensureLoadBalancer(ctx, desire)
 }
 
 // UpdateLoadBalancer updates hosts under the specified load balancer
 func (c *Cloud) UpdateLoadBalancer(ctx context.Context, clusterName string, service *v1.Service, nodes []*v1.Node) error {
+	if isElasticLoadBalancer(service.Annotations) {
+		return c.updateElasticLoadBalancer(ctx, clusterName, service, nodes)
+	}
+
 	loadBalancerName := c.GetLoadBalancerName(ctx, clusterName, service)
 
 	loadBalancers, err := c.client.DescribeLoadBalancers(ctx, loadBalancerName)
@@ -233,6 +275,10 @@ func (c *Cloud) UpdateLoadBalancer(ctx context.Context, clusterName string, serv
 
 // EnsureLoadBalancerDeleted deletes the specified load balancer if it exists
 func (c *Cloud) EnsureLoadBalancerDeleted(ctx context.Context, clusterName string, service *v1.Service) error {
+	if isElasticLoadBalancer(service.Annotations) {
+		return c.ensureElasticLoadBalancerDeleted(ctx, clusterName, service)
+	}
+
 	loadBalancerName := c.GetLoadBalancerName(ctx, clusterName, service)
 
 	loadBalancers, err := c.client.DescribeLoadBalancers(ctx, loadBalancerName)

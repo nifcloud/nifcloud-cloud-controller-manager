@@ -42,10 +42,6 @@ func (c *Cloud) getElasticLoadBalancer(ctx context.Context, clusterName string, 
 	return toLoadBalancerStatus(loadBalancers[0].VIP), true, nil
 }
 
-func (c *Cloud) getElasticLoadBalancerName(ctx context.Context, clusterName string, service *v1.Service) string {
-	return strings.Replace(string(service.UID), "-", "", -1)[:maxLoadBalancerNameLength]
-}
-
 func (c *Cloud) ensureElasticLoadBalancer(ctx context.Context, loadBalancerName string, desire []ElasticLoadBalancer) (*v1.LoadBalancerStatus, error) {
 	// TODO: Add Validation
 	// correct state differences
@@ -588,7 +584,7 @@ func separateHealthCheckTarget(healthCheckTarget string) (string, string) {
 
 func (c *Cloud) updateElasticLoadBalancer(ctx context.Context, clusterName string, service *v1.Service, nodes []*v1.Node) error {
 	// get elastic load balancer name
-	loadBalancerName := c.getElasticLoadBalancerName(ctx, clusterName, service)
+	loadBalancerName := c.GetLoadBalancerName(ctx, clusterName, service)
 
 	// describe load balancer
 	loadBalancers, err := c.client.DescribeElasticLoadBalancers(ctx, loadBalancerName)
@@ -607,7 +603,7 @@ func (c *Cloud) updateElasticLoadBalancer(ctx context.Context, clusterName strin
 
 func (c *Cloud) ensureElasticLoadBalancerDeleted(ctx context.Context, clusterName string, service *v1.Service) error {
 	// get elastic load balancer name
-	loadBalancerName := c.getElasticLoadBalancerName(ctx, clusterName, service)
+	loadBalancerName := c.GetLoadBalancerName(ctx, clusterName, service)
 
 	// describe load balancer
 	loadBalancers, err := c.client.DescribeElasticLoadBalancers(ctx, loadBalancerName)

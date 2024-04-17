@@ -115,7 +115,7 @@ func (c *Cloud) EnsureLoadBalancer(ctx context.Context, clusterName string, serv
 	}
 	instances, err := c.client.DescribeInstancesByInstanceID(ctx, instanceIDs)
 	if err != nil {
-		return nil, fmt.Errorf("could not fetch instances info for %v: %v", instanceIDs, err)
+		return nil, fmt.Errorf("could not fetch instances info for %v: %w", instanceIDs, err)
 	}
 
 	loadBalancerName := c.GetLoadBalancerName(ctx, clusterName, service)

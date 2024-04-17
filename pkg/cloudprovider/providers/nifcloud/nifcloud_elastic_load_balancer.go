@@ -195,7 +195,7 @@ func NewElasticLoadBalancerFromService(loadBalancerName string, instances []Inst
 		balancingType, err := strconv.Atoi(rawBalancingType)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"balancing type %q is invalid for service %q: %v",
+				"balancing type %q is invalid for service %q: %w",
 				rawBalancingType, service.GetName(), err,
 			)
 		}
@@ -252,7 +252,7 @@ func NewElasticLoadBalancerFromService(loadBalancerName string, instances []Inst
 		interval, err := strconv.Atoi(strInterval)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"health check interval %q is invalid for service %q: %v",
+				"health check interval %q is invalid for service %q: %w",
 				strInterval, service.GetName(), err,
 			)
 		}
@@ -270,7 +270,7 @@ func NewElasticLoadBalancerFromService(loadBalancerName string, instances []Inst
 		t, err := strconv.Atoi(unhealthyThreshold)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"unhealthy threshold %q is invalid for service %q: %v",
+				"unhealthy threshold %q is invalid for service %q: %w",
 				unhealthyThreshold, service.GetName(), err,
 			)
 		}

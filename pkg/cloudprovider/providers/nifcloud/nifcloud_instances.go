@@ -32,7 +32,7 @@ func (c *Cloud) NodeAddresses(ctx context.Context, name types.NodeName) ([]v1.No
 func (c *Cloud) NodeAddressesByProviderID(ctx context.Context, providerID string) ([]v1.NodeAddress, error) {
 	instanceUniqueID, err := getInstanceUniqueIDFromProviderID(providerID)
 	if err != nil {
-		return nil, fmt.Errorf("unable to convert provider id %q: %v", providerID, err)
+		return nil, fmt.Errorf("unable to convert provider id %q: %w", providerID, err)
 	}
 
 	instances, err := c.client.DescribeInstancesByInstanceUniqueID(ctx, []string{instanceUniqueID})
@@ -85,7 +85,7 @@ func (c *Cloud) InstanceType(ctx context.Context, name types.NodeName) (string, 
 func (c *Cloud) InstanceTypeByProviderID(ctx context.Context, providerID string) (string, error) {
 	instanceUniqueID, err := getInstanceUniqueIDFromProviderID(providerID)
 	if err != nil {
-		return "", fmt.Errorf("unable to convert provider id %q: %v", providerID, err)
+		return "", fmt.Errorf("unable to convert provider id %q: %w", providerID, err)
 	}
 
 	instances, err := c.client.DescribeInstancesByInstanceUniqueID(ctx, []string{instanceUniqueID})
@@ -115,7 +115,7 @@ func (c *Cloud) CurrentNodeName(ctx context.Context, hostname string) (types.Nod
 func (c *Cloud) InstanceExistsByProviderID(ctx context.Context, providerID string) (bool, error) {
 	instanceUniqueID, err := getInstanceUniqueIDFromProviderID(providerID)
 	if err != nil {
-		return false, fmt.Errorf("unable to convert provider id %q: %v", providerID, err)
+		return false, fmt.Errorf("unable to convert provider id %q: %w", providerID, err)
 	}
 
 	instances, err := c.client.DescribeInstancesByInstanceUniqueID(ctx, []string{instanceUniqueID})

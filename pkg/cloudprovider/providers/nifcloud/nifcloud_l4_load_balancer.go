@@ -169,7 +169,7 @@ func NewL4LoadBalancerFromService(loadBalancerName string, instances []Instance,
 			balancingType, err := strconv.Atoi(rawBalancingType)
 			if err != nil {
 				return nil, fmt.Errorf(
-					"balancing type %q is invalid for service %q: %v",
+					"balancing type %q is invalid for service %q: %w",
 					rawBalancingType, service.GetName(), err,
 				)
 			}
@@ -184,7 +184,7 @@ func NewL4LoadBalancerFromService(loadBalancerName string, instances []Instance,
 			v, err := strconv.Atoi(networkVolume)
 			if err != nil {
 				return nil, fmt.Errorf(
-					"network volume %q is invalid for service %q: %v",
+					"network volume %q is invalid for service %q: %w",
 					networkVolume, service.GetName(), err,
 				)
 			}
@@ -210,7 +210,7 @@ func NewL4LoadBalancerFromService(loadBalancerName string, instances []Instance,
 			interval, err := strconv.Atoi(strInterval)
 			if err != nil {
 				return nil, fmt.Errorf(
-					"health check interval %q is invalid for service %q: %v",
+					"health check interval %q is invalid for service %q: %w",
 					strInterval, service.GetName(), err,
 				)
 			}
@@ -223,7 +223,7 @@ func NewL4LoadBalancerFromService(loadBalancerName string, instances []Instance,
 			t, err := strconv.Atoi(unhealthyThreshold)
 			if err != nil {
 				return nil, fmt.Errorf(
-					"unhealthy threshold %q is invalid for service %q: %v",
+					"unhealthy threshold %q is invalid for service %q: %w",
 					unhealthyThreshold, service.GetName(), err,
 				)
 			}

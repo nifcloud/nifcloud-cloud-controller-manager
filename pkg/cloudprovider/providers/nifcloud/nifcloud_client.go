@@ -261,7 +261,7 @@ func (c *nifcloudAPIClient) DescribeLoadBalancers(ctx context.Context, name stri
 	}
 	res, err := c.client.DescribeLoadBalancers(ctx, input)
 	if err != nil {
-		return nil, fmt.Errorf("could not fetch load balancers info for %q: %v", name, err)
+		return nil, fmt.Errorf("could not fetch load balancers info for %q: %w", name, err)
 	}
 
 	result := []LoadBalancer{}
@@ -559,7 +559,7 @@ func (c *nifcloudAPIClient) DescribeElasticLoadBalancers(ctx context.Context, na
 	}
 	res, err := c.client.NiftyDescribeElasticLoadBalancers(ctx, input)
 	if err != nil {
-		return nil, fmt.Errorf("could not fetch load balancers info for %q: %v", name, err)
+		return nil, fmt.Errorf("could not fetch load balancers info for %q: %w", name, err)
 	}
 
 	result := []ElasticLoadBalancer{}

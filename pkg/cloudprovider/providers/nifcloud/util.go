@@ -26,7 +26,7 @@ func getInstanceUniqueIDFromProviderID(providerID string) (string, error) {
 	}
 	url, err := url.Parse(s)
 	if err != nil {
-		return "", fmt.Errorf("Invalid instance name (%s): %v", providerID, err)
+		return "", fmt.Errorf("Invalid instance name (%s): %w", providerID, err)
 	}
 	if url.Scheme != "nifcloud" {
 		return "", fmt.Errorf("Invalid scheme for NIFCLOUD instance (%s)", providerID)

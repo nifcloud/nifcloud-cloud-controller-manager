@@ -35,7 +35,7 @@ func (c *Cloud) GetZone(ctx context.Context) (cloudprovider.Zone, error) {
 func (c *Cloud) GetZoneByProviderID(ctx context.Context, providerID string) (cloudprovider.Zone, error) {
 	instanceUniqueID, err := getInstanceUniqueIDFromProviderID(providerID)
 	if err != nil {
-		return cloudprovider.Zone{}, fmt.Errorf("unable to convert provider id %q: %v", providerID, err)
+		return cloudprovider.Zone{}, fmt.Errorf("unable to convert provider id %q: %w", providerID, err)
 	}
 
 	instances, err := c.client.DescribeInstancesByInstanceUniqueID(ctx, []string{instanceUniqueID})

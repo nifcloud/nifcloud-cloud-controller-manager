@@ -216,6 +216,9 @@ func (c *nifcloudAPIClient) DescribeInstancesByInstanceID(ctx context.Context, i
 func (c *nifcloudAPIClient) DescribeInstancesByInstanceUniqueID(ctx context.Context, instanceUniqueIDs []string) ([]Instance, error) {
 	res, err := c.client.DescribeInstances(ctx, nil)
 	if err != nil {
+		if isAPIError(err, errorCodeInstanceNotFound) {
+			return nil, cloudprovider.InstanceNotFound
+		}
 		return nil, fmt.Errorf("failed to call DescribeInstances API: %w", err)
 	}
 
@@ -258,7 +261,7 @@ func (c *nifcloudAPIClient) DescribeLoadBalancers(ctx context.Context, name stri
 	}
 	res, err := c.client.DescribeLoadBalancers(ctx, input)
 	if err != nil {
-		return nil, fmt.Errorf("could not fetch load balancers info for %q: %v", name, err)
+		return nil, fmt.Errorf("could not fetch load balancers info for %q: %w", name, err)
 	}
 
 	result := []LoadBalancer{}
@@ -556,7 +559,7 @@ func (c *nifcloudAPIClient) DescribeElasticLoadBalancers(ctx context.Context, na
 	}
 	res, err := c.client.NiftyDescribeElasticLoadBalancers(ctx, input)
 	if err != nil {
-		return nil, fmt.Errorf("could not fetch load balancers info for %q: %v", name, err)
+		return nil, fmt.Errorf("could not fetch load balancers info for %q: %w", name, err)
 	}
 
 	result := []ElasticLoadBalancer{}

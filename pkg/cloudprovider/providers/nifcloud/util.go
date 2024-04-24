@@ -2,6 +2,7 @@ package nifcloud
 
 import (
 	"fmt"
+	"net"
 	"net/url"
 	"os/exec"
 	"strings"
@@ -58,4 +59,8 @@ func isSingleInstance(instances []Instance, name string) error {
 	}
 
 	return nil
+}
+
+func isIPAddress(ipAddress string) bool {
+	return net.ParseIP(ipAddress) != nil
 }

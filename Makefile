@@ -1,3 +1,5 @@
+.PHONY: test
+
 PKG:=github.com/nifcloud/nifcloud-cloud-controller-manager
 IMAGE:=ghcr.io/nifcloud/nifcloud-cloud-controller-manager
 VERSION:=$(shell git describe --tags --dirty --match="v*")
@@ -8,7 +10,10 @@ build:
 	CGO_ENABLED=0 GOOS=linux go build -ldflags $(LDFLAGS) -o bin/nifcloud-cloud-controller-manager ./cmd/nifcloud-cloud-controller-manager
 
 test:
-	go test -cover ./...
+	@ginkgo run ./...
+
+update-gomock:
+	@go generate ./...
 
 image:
 	docker build -t $(IMAGE):$(VERSION) .

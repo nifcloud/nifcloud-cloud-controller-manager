@@ -297,7 +297,7 @@ func validateLoadBalancerAnnotations(annotations map[string]string) error {
 						return fmt.Errorf("annotation %s=%s is invalid", ServiceAnnotationLoadBalancerNetworkInterface1IPAddress, ipAddress)
 					}
 				} else {
-					return fmt.Errorf("annotation %s is required when %s is private ip", ServiceAnnotationLoadBalancerNetworkInterface1IPAddress, ServiceAnnotationLoadBalancerNetworkInterface1)
+					return fmt.Errorf("annotation %s is required when %s is private lan", ServiceAnnotationLoadBalancerNetworkInterface1IPAddress, ServiceAnnotationLoadBalancerNetworkInterface1)
 				}
 
 				if systemIPAddresses, ok := annotations[ServiceAnnotationLoadBalancerNetworkInterface1SystemIPAddresses]; ok {
@@ -311,18 +311,18 @@ func validateLoadBalancerAnnotations(annotations map[string]string) error {
 						}
 					}
 				} else {
-					return fmt.Errorf("annotation %s is required when %s is private ip", ServiceAnnotationLoadBalancerNetworkInterface1SystemIPAddresses, ServiceAnnotationLoadBalancerNetworkInterface1)
+					return fmt.Errorf("annotation %s is required when %s is private lan", ServiceAnnotationLoadBalancerNetworkInterface1SystemIPAddresses, ServiceAnnotationLoadBalancerNetworkInterface1)
 				}
 			} else {
 				if ipAddress, ok := annotations[ServiceAnnotationLoadBalancerNetworkInterface1IPAddress]; ok {
 					if ipAddress != "" {
-						return fmt.Errorf("can set %s only %s is private ip", ServiceAnnotationLoadBalancerNetworkInterface1IPAddress, ServiceAnnotationLoadBalancerNetworkInterface1)
+						return fmt.Errorf("can set %s only %s is private lan", ServiceAnnotationLoadBalancerNetworkInterface1IPAddress, ServiceAnnotationLoadBalancerNetworkInterface1)
 					}
 				}
 
 				if systemIPAddresses, ok := annotations[ServiceAnnotationLoadBalancerNetworkInterface1SystemIPAddresses]; ok {
 					if systemIPAddresses != "" {
-						return fmt.Errorf("can set %s only %s is private ip", ServiceAnnotationLoadBalancerNetworkInterface1SystemIPAddresses, ServiceAnnotationLoadBalancerNetworkInterface1)
+						return fmt.Errorf("can set %s only %s is private lan", ServiceAnnotationLoadBalancerNetworkInterface1SystemIPAddresses, ServiceAnnotationLoadBalancerNetworkInterface1)
 					}
 				}
 			}
@@ -335,7 +335,7 @@ func validateLoadBalancerAnnotations(annotations map[string]string) error {
 						return fmt.Errorf("annotation %s=%s is invalid", ServiceAnnotationLoadBalancerNetworkInterface2IPAddress, ipAddress)
 					}
 				} else {
-					return fmt.Errorf("%s is required when %s is private ip", ServiceAnnotationLoadBalancerNetworkInterface2IPAddress, ServiceAnnotationLoadBalancerNetworkInterface2)
+					return fmt.Errorf("%s is required when %s is private lan", ServiceAnnotationLoadBalancerNetworkInterface2IPAddress, ServiceAnnotationLoadBalancerNetworkInterface2)
 				}
 
 				if systemIPAddresses, ok := annotations[ServiceAnnotationLoadBalancerNetworkInterface2SystemIPAddresses]; ok {
@@ -349,18 +349,18 @@ func validateLoadBalancerAnnotations(annotations map[string]string) error {
 						}
 					}
 				} else {
-					return fmt.Errorf("annotation %s is required when %s is private ip", ServiceAnnotationLoadBalancerNetworkInterface2SystemIPAddresses, ServiceAnnotationLoadBalancerNetworkInterface1)
+					return fmt.Errorf("annotation %s is required when %s is private lan", ServiceAnnotationLoadBalancerNetworkInterface2SystemIPAddresses, ServiceAnnotationLoadBalancerNetworkInterface1)
 				}
 			} else {
 				if ipAddress, ok := annotations[ServiceAnnotationLoadBalancerNetworkInterface2IPAddress]; ok {
 					if ipAddress != "" {
-						return fmt.Errorf("can set %s only %s is private ip", ServiceAnnotationLoadBalancerNetworkInterface2IPAddress, ServiceAnnotationLoadBalancerNetworkInterface2)
+						return fmt.Errorf("can set %s only %s is private lan", ServiceAnnotationLoadBalancerNetworkInterface2IPAddress, ServiceAnnotationLoadBalancerNetworkInterface2)
 					}
 				}
 
 				if systemIPAddresses, ok := annotations[ServiceAnnotationLoadBalancerNetworkInterface2SystemIPAddresses]; ok {
 					if systemIPAddresses != "" {
-						return fmt.Errorf("can set %s only %s is private ip", ServiceAnnotationLoadBalancerNetworkInterface2SystemIPAddresses, ServiceAnnotationLoadBalancerNetworkInterface2)
+						return fmt.Errorf("can set %s only %s is private lan", ServiceAnnotationLoadBalancerNetworkInterface2SystemIPAddresses, ServiceAnnotationLoadBalancerNetworkInterface2)
 					}
 				}
 			}

@@ -47,7 +47,6 @@ func (c *Cloud) getElasticLoadBalancer(ctx context.Context, clusterName string, 
 }
 
 func (c *Cloud) ensureElasticLoadBalancer(ctx context.Context, loadBalancerName string, desire []ElasticLoadBalancer) (*v1.LoadBalancerStatus, error) {
-	// TODO: Add Validation
 	// correct state differences
 	if len(desire) == 0 {
 		return nil, fmt.Errorf("desire ElasticLoadBalancer length must be larger than 1")
@@ -173,7 +172,6 @@ func (c *Cloud) ensureElasticLoadBalancer(ctx context.Context, loadBalancerName 
 }
 
 func NewElasticLoadBalancerFromService(loadBalancerName string, instances []Instance, service *v1.Service) ([]ElasticLoadBalancer, error) {
-	// TODO: validation
 	portCount := len(service.Spec.Ports)
 
 	// detect state differences

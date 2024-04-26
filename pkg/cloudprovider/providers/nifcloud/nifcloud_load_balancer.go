@@ -200,6 +200,12 @@ func validateLoadBalancerAnnotations(annotations map[string]string) error {
 		}
 	}
 
+	if proto, ok := annotations[ServiceAnnotationLoadBalancerHCProtocol]; ok {
+		if proto != "TCP" && proto != "ICMP" {
+			return fmt.Errorf("annotation %s=%s is invalid", ServiceAnnotationLoadBalancerHCProtocol, proto)
+		}
+	}
+
 	if unhealthyThreshold, ok := annotations[ServiceAnnotationLoadBalancerHCUnhealthyThreshold]; ok {
 		t, err := strconv.Atoi(unhealthyThreshold)
 		if err != nil || t < 1 || 10 < t {
@@ -225,12 +231,6 @@ func validateLoadBalancerAnnotations(annotations map[string]string) error {
 		if policyType, ok := annotations[ServiceAnnotationLoadBalancerPolicyType]; ok {
 			if policyType != "standard" && policyType != "ats" {
 				return fmt.Errorf("annotation %s=%s is invalid", ServiceAnnotationLoadBalancerPolicyType, policyType)
-			}
-		}
-
-		if proto, ok := annotations[ServiceAnnotationLoadBalancerHCProtocol]; ok {
-			if proto != "TCP" && proto != "ICMP" {
-				return fmt.Errorf("annotation %s=%s is invalid", ServiceAnnotationLoadBalancerHCProtocol, proto)
 			}
 		}
 
@@ -287,12 +287,6 @@ func validateLoadBalancerAnnotations(annotations map[string]string) error {
 		if policyType, ok := annotations[ServiceAnnotationLoadBalancerPolicyType]; ok {
 			if policyType != "" {
 				return fmt.Errorf("annotation %s is only enabled for %s=lb", ServiceAnnotationLoadBalancerPolicyType, ServiceAnnotationLoadBalancerType)
-			}
-		}
-
-		if proto, ok := annotations[ServiceAnnotationLoadBalancerHCProtocol]; ok {
-			if proto != "TCP" && proto != "ICMP" {
-				return fmt.Errorf("annotation %s=%s is invalid", ServiceAnnotationLoadBalancerHCProtocol, proto)
 			}
 		}
 

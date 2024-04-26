@@ -1,3 +1,4 @@
+//go:generate mockgen -source=$GOFILE -destination=zz_generated.mock_$GOFILE -package=$GOPACKAGE
 package nifcloud
 
 import (

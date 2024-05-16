@@ -978,3 +978,184 @@ var _ = Describe("NewElasticLoadBalancerFromService", func() {
 	})
 })
 
+var _ = Describe("securityGroupRulesOfElasticLoadBalancer", func() {
+	var loadBalancerName string
+
+	BeforeEach(func() {
+		loadBalancerName = "testloadbalancer"
+	})
+
+	Context("given elastic load balancer has one network interface", func() {
+		Context("the health check protocol is ICMP", func() {
+			It("returns security group rules", func() {
+				ctx := context.Background()
+
+				testELB := &helper.NewTestElasticLoadBalancer(loadBalancerName)[0]
+				testELB.VIP = "203.0.113.1"
+				testELB.HealthCheckTarget = "ICMP"
+				testELB.NetworkInterfaces[0].SystemIpAddresses = []string{"203.0.113.10", "203.0.113.11"}
+
+				wantSecurityGroupRules := []nifcloud.SecurityGroupRule{
+					{
+						IpProtocol: testELB.Protocol,
+						FromPort:   testELB.InstancePort,
+						ToPort:     testELB.InstancePort,
+						InOut:      "IN",
+						IpRanges:   []string{testELB.VIP},
+					},
+					{
+						IpProtocol: "ICMP",
+						InOut:      "IN",
+						IpRanges:   []string{testELB.VIP},
+					},
+					{
+						IpProtocol: "ICMP",
+						InOut:      "IN",
+						IpRanges:   []string{testELB.NetworkInterfaces[0].SystemIpAddresses[0]},
+					},
+					{
+						IpProtocol: "ICMP",
+						InOut:      "IN",
+						IpRanges:   []string{testELB.NetworkInterfaces[0].SystemIpAddresses[1]},
+					},
+				}
+
+				gotSecurityGroupRules, err := nifcloud.ExportSecurityGroupRulesOfElasticLoadBalancer(ctx, testELB)
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(gotSecurityGroupRules).Should(Equal(wantSecurityGroupRules))
+			})
+		})
+		Context("the health check protocol is not ICMP", func() {
+			It("returns security group rules", func() {
+				ctx := context.Background()
+
+				testELB := &helper.NewTestElasticLoadBalancer(loadBalancerName)[0]
+				testELB.VIP = "203.0.113.1"
+				testELB.NetworkInterfaces[0].SystemIpAddresses = []string{"203.0.113.10", "203.0.113.11"}
+
+				wantSecurityGroupRules := []nifcloud.SecurityGroupRule{
+					{
+						IpProtocol: testELB.Protocol,
+						FromPort:   testELB.InstancePort,
+						ToPort:     testELB.InstancePort,
+						InOut:      "IN",
+						IpRanges:   []string{testELB.VIP},
+					},
+					{
+						IpProtocol: testELB.Protocol,
+						FromPort:   testELB.InstancePort,
+						ToPort:     testELB.InstancePort,
+						InOut:      "IN",
+						IpRanges:   []string{testELB.NetworkInterfaces[0].SystemIpAddresses[0]},
+					},
+					{
+						IpProtocol: testELB.Protocol,
+						FromPort:   testELB.InstancePort,
+						ToPort:     testELB.InstancePort,
+						InOut:      "IN",
+						IpRanges:   []string{testELB.NetworkInterfaces[0].SystemIpAddresses[1]},
+					},
+				}
+
+				gotSecurityGroupRules, err := nifcloud.ExportSecurityGroupRulesOfElasticLoadBalancer(ctx, testELB)
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(gotSecurityGroupRules).Should(Equal(wantSecurityGroupRules))
+			})
+		})
+	})
+
+	Context("given elastic load balancer has two network interface", func() {
+		Context("the health check protocol is ICMP", func() {
+			It("returns security group rules", func() {
+				ctx := context.Background()
+
+				testELB := &helper.NewTestElasticLoadBalancer(loadBalancerName)[0]
+				testELB.VIP = "198.168.0.1"
+				testELB.HealthCheckTarget = "ICMP"
+				testELB.NetworkInterfaces = []nifcloud.NetworkInterface{
+					{
+						NetworkId:         "net-abcd1234",
+						IPAddress:         "192.168.0.10",
+						SystemIpAddresses: []string{"192.168.0.11", "192.168.0.12"},
+						IsVipNetwork:      true,
+					},
+					{
+						NetworkId:         "net-xyzw5678",
+						IPAddress:         "192.168.1.10",
+						SystemIpAddresses: []string{"192.168.1.11", "192.168.1.12"},
+					},
+				}
+				wantSecurityGroupRules := []nifcloud.SecurityGroupRule{
+					{
+						IpProtocol: "ICMP",
+						InOut:      "IN",
+						IpRanges:   []string{testELB.NetworkInterfaces[1].IPAddress},
+					},
+					{
+						IpProtocol: "ICMP",
+						InOut:      "IN",
+						IpRanges:   []string{testELB.NetworkInterfaces[1].SystemIpAddresses[0]},
+					},
+					{
+						IpProtocol: "ICMP",
+						InOut:      "IN",
+						IpRanges:   []string{testELB.NetworkInterfaces[1].SystemIpAddresses[1]},
+					},
+				}
+
+				gotSecurityGroupRules, err := nifcloud.ExportSecurityGroupRulesOfElasticLoadBalancer(ctx, testELB)
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(gotSecurityGroupRules).Should(Equal(wantSecurityGroupRules))
+			})
+		})
+		Context("the health check protocol is not ICMP", func() {
+			It("returns security group rules", func() {
+				ctx := context.Background()
+
+				testELB := &helper.NewTestElasticLoadBalancer(loadBalancerName)[0]
+				testELB.VIP = "198.168.0.1"
+				testELB.NetworkInterfaces = []nifcloud.NetworkInterface{
+					{
+						NetworkId:         "net-abcd1234",
+						IPAddress:         "192.168.0.10",
+						SystemIpAddresses: []string{"192.168.0.11", "192.168.0.12"},
+						IsVipNetwork:      true,
+					},
+					{
+						NetworkId:         "net-xyzw5678",
+						IPAddress:         "192.168.1.10",
+						SystemIpAddresses: []string{"192.168.1.11", "192.168.1.12"},
+					},
+				}
+				wantSecurityGroupRules := []nifcloud.SecurityGroupRule{
+					{
+						IpProtocol: testELB.Protocol,
+						FromPort:   testELB.InstancePort,
+						ToPort:     testELB.InstancePort,
+						InOut:      "IN",
+						IpRanges:   []string{testELB.NetworkInterfaces[1].IPAddress},
+					},
+					{
+						IpProtocol: testELB.Protocol,
+						FromPort:   testELB.InstancePort,
+						ToPort:     testELB.InstancePort,
+						InOut:      "IN",
+						IpRanges:   []string{testELB.NetworkInterfaces[1].SystemIpAddresses[0]},
+					},
+					{
+						IpProtocol: testELB.Protocol,
+						FromPort:   testELB.InstancePort,
+						ToPort:     testELB.InstancePort,
+						InOut:      "IN",
+						IpRanges:   []string{testELB.NetworkInterfaces[1].SystemIpAddresses[1]},
+					},
+				}
+
+				gotSecurityGroupRules, err := nifcloud.ExportSecurityGroupRulesOfElasticLoadBalancer(ctx, testELB)
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(gotSecurityGroupRules).Should(Equal(wantSecurityGroupRules))
+			})
+		})
+	})
+})
+

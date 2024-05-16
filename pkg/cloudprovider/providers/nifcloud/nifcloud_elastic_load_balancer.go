@@ -399,7 +399,7 @@ func (c *Cloud) allowSecurityGroupRulesFromElasticLoadBalancer(ctx context.Conte
 		return err
 	}
 
-	securityGroupRules, err := c.securityGroupRulesOfElasticLoadBalancer(ctx, elasticLoadBalancer)
+	securityGroupRules, err := securityGroupRulesOfElasticLoadBalancer(ctx, elasticLoadBalancer)
 	if err != nil {
 		return err
 	}
@@ -435,7 +435,7 @@ func (c *Cloud) denySecurityGroupRulesFromElasticLoadBalancer(ctx context.Contex
 		return err
 	}
 
-	securityGroupRules, err := c.securityGroupRulesOfElasticLoadBalancer(ctx, elasticLoadBalancer)
+	securityGroupRules, err := securityGroupRulesOfElasticLoadBalancer(ctx, elasticLoadBalancer)
 	if err != nil {
 		return err
 	}
@@ -460,7 +460,7 @@ func (c *Cloud) denySecurityGroupRulesFromElasticLoadBalancer(ctx context.Contex
 	return nil
 }
 
-func (c *Cloud) securityGroupRulesOfElasticLoadBalancer(ctx context.Context, elasticLoadBalancer *ElasticLoadBalancer) ([]SecurityGroupRule, error) {
+func securityGroupRulesOfElasticLoadBalancer(ctx context.Context, elasticLoadBalancer *ElasticLoadBalancer) ([]SecurityGroupRule, error) {
 	securityGroupRules := []SecurityGroupRule{}
 	VIPRanges := []string{elasticLoadBalancer.VIP}
 

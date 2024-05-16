@@ -861,3 +861,120 @@ var _ = Describe("ensureElasticLoadBalancer", func() {
 		})
 	})
 })
+
+var _ = Describe("NewElasticLoadBalancerFromService", func() {
+	var loadBalancerName string
+	var testService corev1.Service
+
+	BeforeEach(func() {
+		loadBalancerName = "testloadbalancer"
+		testService = corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "testlbsvc",
+				Annotations: map[string]string{
+					nifcloud.ServiceAnnotationLoadBalancerBalancingType:        "1",
+					nifcloud.ServiceAnnotationLoadBalancerAccountingType:       "1",
+					nifcloud.ServiceAnnotationLoadBalancerNetworkVolume:        "100",
+					nifcloud.ServiceAnnotationLoadBalancerHCInterval:           "10",
+					nifcloud.ServiceAnnotationLoadBalancerHCUnhealthyThreshold: "1",
+					nifcloud.ServiceAnnotationLoadBalancerHCProtocol:           "TCP",
+					nifcloud.ServiceAnnotationLoadBalancerNetworkInterface1:    "net-COMMON_GLOBAL",
+					nifcloud.ServiceAnnotationLoadBalancerVipNetwork:           "1",
+				},
+			},
+			Spec: corev1.ServiceSpec{
+				Ports: []corev1.ServicePort{
+					{
+						Port:     80,
+						NodePort: 30000,
+						Protocol: corev1.ProtocolTCP,
+					},
+				},
+			},
+		}
+	})
+
+	Context("given valid elastic load balancer", func() {
+		It("return the elastic load balancer", func() {
+			testInstances := []nifcloud.Instance{*helper.NewTestInstance()}
+			expectELB := helper.NewTestElasticLoadBalancer(loadBalancerName)
+			gotELB, err := nifcloud.NewElasticLoadBalancerFromService(loadBalancerName, testInstances, &testService)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(gotELB).Should(Equal(expectELB))
+		})
+	})
+
+	Context("given elastic load balancer that has two ports", func() {
+		It("return the elastic load balancer", func() {
+			testService.Spec.Ports = append(testService.Spec.Ports, corev1.ServicePort{
+				Port:     443,
+				NodePort: 30001,
+				Protocol: corev1.ProtocolTCP,
+			},
+			)
+			testInstances := []nifcloud.Instance{*helper.NewTestInstance()}
+			expectELB := helper.NewTestElasticLoadBalancerWithTwoPort(loadBalancerName)
+			gotELB, err := nifcloud.NewElasticLoadBalancerFromService(loadBalancerName, testInstances, &testService)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(gotELB).Should(Equal(expectELB))
+		})
+	})
+
+	Context("given elastic load balancer that health check protocol is ICMP", func() {
+		It("return the elastic load balancer", func() {
+			testService.Annotations[nifcloud.ServiceAnnotationLoadBalancerHCProtocol] = "ICMP"
+			testInstances := []nifcloud.Instance{*helper.NewTestInstance()}
+			expectELB := helper.NewTestElasticLoadBalancer(loadBalancerName)
+			expectELB[0].HealthCheckTarget = "ICMP"
+			gotELB, err := nifcloud.NewElasticLoadBalancerFromService(loadBalancerName, testInstances, &testService)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(gotELB).Should(Equal(expectELB))
+		})
+	})
+
+	Context("given elastic load balancer that has two network interfaces", func() {
+		It("return the elastic load balancer", func() {
+			testService.Annotations[nifcloud.ServiceAnnotationLoadBalancerNetworkInterface2] = "net-COMMON_PRIVATE"
+			testInstances := []nifcloud.Instance{*helper.NewTestInstance()}
+			expectELB := helper.NewTestElasticLoadBalancer(loadBalancerName)
+			expectELB[0].NetworkInterfaces = append(expectELB[0].NetworkInterfaces, nifcloud.NetworkInterface{
+				NetworkId: "net-COMMON_PRIVATE",
+			})
+			gotELB, err := nifcloud.NewElasticLoadBalancerFromService(loadBalancerName, testInstances, &testService)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(gotELB).Should(Equal(expectELB))
+		})
+	})
+
+	Context("given elastic load balancer that connects private network", func() {
+		It("return the elastic load balancer", func() {
+			testService.Annotations[nifcloud.ServiceAnnotationLoadBalancerNetworkInterface1] = "net-abcd1234"
+			testService.Annotations[nifcloud.ServiceAnnotationLoadBalancerNetworkInterface1IPAddress] = "192.168.0.10"
+			testService.Annotations[nifcloud.ServiceAnnotationLoadBalancerNetworkInterface1SystemIPAddresses] = "192.168.0.11,192.168.0.12"
+			testService.Annotations[nifcloud.ServiceAnnotationLoadBalancerNetworkInterface2] = "net-xyzw5678"
+			testService.Annotations[nifcloud.ServiceAnnotationLoadBalancerNetworkInterface2IPAddress] = "192.168.1.10"
+			testService.Annotations[nifcloud.ServiceAnnotationLoadBalancerNetworkInterface2SystemIPAddresses] = "192.168.1.11,192.168.1.12"
+
+			testInstances := []nifcloud.Instance{*helper.NewTestInstance()}
+			expectELB := helper.NewTestElasticLoadBalancer(loadBalancerName)
+			expectELB[0].NetworkInterfaces = []nifcloud.NetworkInterface{
+				{
+					NetworkId:         "net-abcd1234",
+					IPAddress:         "192.168.0.10",
+					SystemIpAddresses: []string{"192.168.0.11", "192.168.0.12"},
+					IsVipNetwork:      true,
+				},
+				{
+					NetworkId:         "net-xyzw5678",
+					IPAddress:         "192.168.1.10",
+					SystemIpAddresses: []string{"192.168.1.11", "192.168.1.12"},
+				},
+			}
+
+			gotELB, err := nifcloud.NewElasticLoadBalancerFromService(loadBalancerName, testInstances, &testService)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(gotELB).Should(Equal(expectELB))
+		})
+	})
+})
+

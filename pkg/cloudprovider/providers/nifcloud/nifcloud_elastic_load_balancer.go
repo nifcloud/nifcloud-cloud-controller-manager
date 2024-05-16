@@ -584,7 +584,7 @@ func separateHealthCheckTarget(healthCheckTarget string) (string, string) {
 	return match[1], match[2]
 }
 
-func (c *Cloud) updateElasticLoadBalancer(ctx context.Context, clusterName string, service *v1.Service, nodes []*v1.Node) error {
+func (c *Cloud) updateElasticLoadBalancer(ctx context.Context, clusterName string, service *v1.Service) error {
 	// get elastic load balancer name
 	loadBalancerName := c.GetLoadBalancerName(ctx, clusterName, service)
 
@@ -597,10 +597,7 @@ func (c *Cloud) updateElasticLoadBalancer(ctx context.Context, clusterName strin
 		return fmt.Errorf("load balancer %q not found", loadBalancerName)
 	}
 
-	// ensure load balancer
-	_, err = c.EnsureLoadBalancer(ctx, clusterName, service, nodes)
-
-	return err
+	return nil
 }
 
 func (c *Cloud) ensureElasticLoadBalancerDeleted(ctx context.Context, clusterName string, service *v1.Service) error {

@@ -272,7 +272,7 @@ func NewL4LoadBalancerFromService(loadBalancerName string, instances []Instance,
 	return desire, nil
 }
 
-func (c *Cloud) updateL4LoadBalancer(ctx context.Context, clusterName string, service *v1.Service, nodes []*v1.Node) error {
+func (c *Cloud) updateL4LoadBalancer(ctx context.Context, clusterName string, service *v1.Service) error {
 	loadBalancerName := c.GetLoadBalancerName(ctx, clusterName, service)
 
 	loadBalancers, err := c.client.DescribeLoadBalancers(ctx, loadBalancerName)
@@ -282,9 +282,7 @@ func (c *Cloud) updateL4LoadBalancer(ctx context.Context, clusterName string, se
 	if len(loadBalancers) == 0 {
 		return fmt.Errorf("load balancer %q not found", loadBalancerName)
 	}
-
-	_, err = c.EnsureLoadBalancer(ctx, clusterName, service, nodes)
-	return err
+	return nil
 }
 
 func (c *Cloud) ensureL4LoadBalancerDeleted(ctx context.Context, clusterName string, service *v1.Service) error {

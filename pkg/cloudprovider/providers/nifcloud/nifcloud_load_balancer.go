@@ -158,12 +158,21 @@ func (c *Cloud) UpdateLoadBalancer(ctx context.Context, clusterName string, serv
 	}
 
 	if isElasticLoadBalancer(service.Annotations) {
-		return c.updateElasticLoadBalancer(ctx, clusterName, service, nodes)
+		err = c.updateElasticLoadBalancer(ctx, clusterName, service)
+		if err != nil {
+			return err
+		}
+	} else if isL4LoadBalancer(service.Annotations) {
+		err = c.updateL4LoadBalancer(ctx, clusterName, service)
+		if err != nil {
+			return err
+		}
+	} else {
+		return fmt.Errorf("the load balancer type is not supported")
 	}
-	if isL4LoadBalancer(service.Annotations) {
-		return c.updateL4LoadBalancer(ctx, clusterName, service, nodes)
-	}
-	return fmt.Errorf("the load balancer type is not supported")
+
+	_, err = c.EnsureLoadBalancer(ctx, clusterName, service, nodes)
+	return err
 }
 
 // EnsureLoadBalancerDeleted deletes the specified load balancer if it exists

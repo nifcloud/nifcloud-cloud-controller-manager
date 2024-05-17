@@ -1228,6 +1228,20 @@ var _ = Describe("updateElasticLoadBalancer", func() {
 	})
 })
 
+var _ = Describe("separateHealthCheckTarget", func() {
+	DescribeTable("valid HealthCheckTarget",
+		func(healthCheckTarget, expectProtocol, expectPort string) {
+			gotProtocol, gotPort := nifcloud.ExportSeparateHealthCheckTarget(healthCheckTarget)
+			Expect(gotProtocol).Should(Equal(expectProtocol))
+			Expect(gotPort).Should(Equal(expectPort))
+		},
+		Entry("the protocol is ICMP", "ICMP", "ICMP", ""),
+		Entry("the protocol is TCP", "TCP:8080", "TCP", "8080"),
+		Entry("the protocol is HTTP", "HTTP:80", "HTTP", "80"),
+		Entry("the protocol is HTTPS", "HTTPS:443", "HTTPS", "443"),
+	)
+})
+
 var _ = Describe("ensureElasticLoadBalancerDeleted", func() {
 	var ctrl *gomock.Controller
 	var region string = "east1"

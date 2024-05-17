@@ -1227,3 +1227,122 @@ var _ = Describe("updateElasticLoadBalancer", func() {
 		})
 	})
 })
+
+var _ = Describe("ensureElasticLoadBalancerDeleted", func() {
+	var ctrl *gomock.Controller
+	var region string = "east1"
+	var clusterName string = "testCluster"
+	var loadBalancerUID types.UID
+	var loadBalancerName string
+	var testService *corev1.Service
+
+	BeforeEach(func() {
+		ctrl = gomock.NewController(GinkgoT())
+		loadBalancerUID = types.UID(uuid.NewString())
+		loadBalancerName = strings.Replace(string(loadBalancerUID), "-", "", -1)[:nifcloud.ExportMaxLoadBalancerNameLength]
+		testService = &corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "testlbsvc",
+				UID:  loadBalancerUID,
+			},
+		}
+	})
+
+	AfterEach(func() {
+		ctrl.Finish()
+	})
+
+	Context("the elastic load balancer is existed", func() {
+		It("delete the elastic load balancer", func() {
+			ctx := context.Background()
+
+			testELB := helper.NewTestElasticLoadBalancer(loadBalancerName)
+			testELB[0].VIP = "203.0.113.1"
+			testELB[0].NetworkInterfaces[0].SystemIpAddresses = []string{"203.0.113.10", "203.0.113.11"}
+			testSecurityGroups := helper.NewTestEmptySecurityGroups()
+
+			c := nifcloud.NewMockCloudAPIClient(ctrl)
+			c.EXPECT().
+				DescribeElasticLoadBalancers(gomock.Any(), gomock.Eq(loadBalancerName)).
+				Return(testELB, nil).
+				Times(1)
+			c.EXPECT().
+				DeleteElasticLoadBalancer(gomock.Any(), gomock.Eq(&testELB[0])).
+				Return(nil).
+				Times(1)
+			expectedInstanceIDs := lo.Map(testELB[0].BalancingTargets, func(instance nifcloud.Instance, _ int) string {
+				return instance.InstanceID
+			})
+			c.EXPECT().
+				DescribeSecurityGroupsByInstanceIDs(gomock.Any(), gomock.Eq(expectedInstanceIDs)).
+				Return(testSecurityGroups, nil).
+				Times(1)
+
+			deletedSecurityGroupRules := []nifcloud.SecurityGroupRule{
+				{
+					IpProtocol: testELB[0].Protocol,
+					FromPort:   testELB[0].InstancePort,
+					ToPort:     testELB[0].InstancePort,
+					InOut:      "IN",
+					IpRanges:   []string{testELB[0].VIP},
+				},
+				{
+					IpProtocol: testELB[0].Protocol,
+					FromPort:   testELB[0].InstancePort,
+					ToPort:     testELB[0].InstancePort,
+					InOut:      "IN",
+					IpRanges:   []string{testELB[0].NetworkInterfaces[0].SystemIpAddresses[0]},
+				},
+				{
+					IpProtocol: testELB[0].Protocol,
+					FromPort:   testELB[0].InstancePort,
+					ToPort:     testELB[0].InstancePort,
+					InOut:      "IN",
+					IpRanges:   []string{testELB[0].NetworkInterfaces[0].SystemIpAddresses[1]},
+				},
+			}
+			callRevokeSecurityGroupIngressTime := 0
+			c.EXPECT().
+				RevokeSecurityGroupIngress(gomock.Any(), gomock.Eq(testSecurityGroups[0].GroupName), gomock.Any()).
+				Do(func(_ context.Context, _ string, securityGroupRule *nifcloud.SecurityGroupRule) {
+					Expect(*securityGroupRule).Should(Equal(deletedSecurityGroupRules[callRevokeSecurityGroupIngressTime]))
+					callRevokeSecurityGroupIngressTime += 1
+				}).
+				Return(nil).
+				Times(3)
+			c.EXPECT().
+				WaitSecurityGroupApplied(gomock.Any(), gomock.Eq(testSecurityGroups[0].GroupName)).
+				Return(nil).
+				Times(3)
+
+			cloud := &nifcloud.Cloud{}
+			cloud.SetClint(c)
+			cloud.SetRegion(region)
+
+			err := nifcloud.ExportEnsureElasticLoadBalancerDeleted(cloud, ctx, clusterName, testService)
+			Expect(err).ShouldNot(HaveOccurred())
+		})
+	})
+
+	Context("the elastic load balancer is not existed", func() {
+		It("return nil", func() {
+			ctx := context.Background()
+
+			testELB := []nifcloud.ElasticLoadBalancer{}
+			notFoundErr := helper.NewMockAPIError(nifcloud.ExportErrorCodeElasticLoadBalancerNotFound)
+
+			c := nifcloud.NewMockCloudAPIClient(ctrl)
+			c.EXPECT().
+				DescribeElasticLoadBalancers(gomock.Any(), gomock.Eq(loadBalancerName)).
+				Return(testELB, notFoundErr).
+				Times(1)
+
+			cloud := &nifcloud.Cloud{}
+			cloud.SetClint(c)
+			cloud.SetRegion(region)
+
+			err := nifcloud.ExportEnsureElasticLoadBalancerDeleted(cloud, ctx, clusterName, testService)
+			Expect(err).ShouldNot(HaveOccurred())
+		})
+	})
+})

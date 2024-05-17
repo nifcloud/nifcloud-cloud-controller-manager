@@ -21,6 +21,7 @@ var ExportEnsureElasticLoadBalancer = (*Cloud).ensureElasticLoadBalancer
 var ExportUpdateElasticLoadBalancer = (*Cloud).updateElasticLoadBalancer
 var ExportEnsureElasticLoadBalancerDeleted = (*Cloud).ensureElasticLoadBalancerDeleted
 var ExportSecurityGroupRulesOfElasticLoadBalancer = securityGroupRulesOfElasticLoadBalancer
+var ExportSeparateHealthCheckTarget = separateHealthCheckTarget
 
 // nifcloud_error_code.go
 

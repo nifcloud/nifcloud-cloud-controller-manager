@@ -1386,3 +1386,42 @@ var _ = Describe("findElasticLoadBalancer", func() {
 	})
 })
 
+var _ = Describe("elasticLoadBalancerDifferences", func() {
+	var loadBalancerName = "testloadbalancer"
+
+	Context("target has an elastic load balancer is not existed in other", func() {
+		It("return the elastic load balancer", func() {
+			targetELB := helper.NewTestElasticLoadBalancerWithTwoPort(loadBalancerName)
+			otherELB := helper.NewTestElasticLoadBalancer(loadBalancerName)
+
+			expectELB := []nifcloud.ElasticLoadBalancer{targetELB[1]}
+
+			gotELB := nifcloud.ExportElasticLoadBalancerDifferences(targetELB, otherELB)
+			Expect(gotELB).Should(Equal(expectELB))
+		})
+	})
+
+	Context("target and other have same elastic load balancers", func() {
+		It("return empty array", func() {
+			targetELB := helper.NewTestElasticLoadBalancerWithTwoPort(loadBalancerName)
+			otherELB := helper.NewTestElasticLoadBalancerWithTwoPort(loadBalancerName)
+
+			expectELB := []nifcloud.ElasticLoadBalancer{}
+
+			gotELB := nifcloud.ExportElasticLoadBalancerDifferences(targetELB, otherELB)
+			Expect(gotELB).Should(Equal(expectELB))
+		})
+	})
+
+	Context("other has an elastic load balancer is not existed in target", func() {
+		It("return empty array", func() {
+			targetELB := helper.NewTestElasticLoadBalancer(loadBalancerName)
+			otherELB := helper.NewTestElasticLoadBalancerWithTwoPort(loadBalancerName)
+
+			expectELB := []nifcloud.ElasticLoadBalancer{}
+
+			gotELB := nifcloud.ExportElasticLoadBalancerDifferences(targetELB, otherELB)
+			Expect(gotELB).Should(Equal(expectELB))
+		})
+	})
+})

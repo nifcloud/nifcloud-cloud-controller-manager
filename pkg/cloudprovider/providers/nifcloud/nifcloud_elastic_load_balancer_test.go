@@ -1360,3 +1360,29 @@ var _ = Describe("ensureElasticLoadBalancerDeleted", func() {
 		})
 	})
 })
+
+var _ = Describe("findElasticLoadBalancer", func() {
+	var loadBalancerName = "testloadbalancer"
+
+	Context("target is existed in the array", func() {
+		It("return target elastic load balancer", func() {
+			testELB := helper.NewTestElasticLoadBalancerWithTwoPort(loadBalancerName)
+			target := testELB[0]
+
+			gotELB, err := nifcloud.ExportFindElasticLoadBalancer(testELB, target)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(gotELB).Should(Equal(&testELB[0]))
+		})
+	})
+
+	Context("target is not existed in the array", func() {
+		It("return error", func() {
+			testELB := helper.NewTestElasticLoadBalancerWithTwoPort(loadBalancerName)
+			target := helper.NewTestElasticLoadBalancer("notexistedloadbalancer")[0]
+
+			_, err := nifcloud.ExportFindElasticLoadBalancer(testELB, target)
+			Expect(err).Should(HaveOccurred())
+		})
+	})
+})
+

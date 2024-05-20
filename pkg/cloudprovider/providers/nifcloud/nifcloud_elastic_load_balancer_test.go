@@ -44,7 +44,7 @@ var _ = Describe("getElasticLoadBalancer", func() {
 					UID:  loadBalancerUID,
 				},
 			}
-			testIPAddress := "192.168.0.1"
+			testIPAddress := "203.0.113.1"
 
 			expectedStatus := &corev1.LoadBalancerStatus{
 				Ingress: []corev1.LoadBalancerIngress{
@@ -159,12 +159,12 @@ var _ = Describe("ensureElasticLoadBalancer", func() {
 		Context("the elastic load balancer has one port", func() {
 			It("create the elastic load balancer", func() {
 				ctx := context.Background()
-				testIPAddress := "192.168.0.1"
+				testIPAddress := "203.0.113.1"
 				testDesire := helper.NewTestElasticLoadBalancer(loadBalancerName)
 				testELB := helper.NewTestElasticLoadBalancer(loadBalancerName)
 				testELB[0].VIP = testIPAddress
-				testELB[0].NetworkInterfaces[0].SystemIpAddresses = append(testELB[0].NetworkInterfaces[0].SystemIpAddresses, "192.168.0.10")
-				testELB[0].NetworkInterfaces[0].SystemIpAddresses = append(testELB[0].NetworkInterfaces[0].SystemIpAddresses, "192.168.0.11")
+				testELB[0].NetworkInterfaces[0].SystemIpAddresses = append(testELB[0].NetworkInterfaces[0].SystemIpAddresses, "203.0.113.10")
+				testELB[0].NetworkInterfaces[0].SystemIpAddresses = append(testELB[0].NetworkInterfaces[0].SystemIpAddresses, "203.0.113.11")
 
 				testSecurityGroups := helper.NewTestEmptySecurityGroups()
 
@@ -254,13 +254,13 @@ var _ = Describe("ensureElasticLoadBalancer", func() {
 		Context("the elastic load balancer has two port", func() {
 			It("create the elastic load balancer", func() {
 				ctx := context.Background()
-				testIPAddress := "192.168.0.1"
+				testIPAddress := "203.0.113.1"
 				testDesire := helper.NewTestElasticLoadBalancerWithTwoPort(loadBalancerName)
 				testELB := helper.NewTestElasticLoadBalancerWithTwoPort(loadBalancerName)
 				for i := range testELB {
 					testELB[i].VIP = testIPAddress
-					testELB[i].NetworkInterfaces[0].SystemIpAddresses = append(testELB[0].NetworkInterfaces[0].SystemIpAddresses, "192.168.0.10")
-					testELB[i].NetworkInterfaces[0].SystemIpAddresses = append(testELB[0].NetworkInterfaces[0].SystemIpAddresses, "192.168.0.11")
+					testELB[i].NetworkInterfaces[0].SystemIpAddresses = append(testELB[0].NetworkInterfaces[0].SystemIpAddresses, "203.0.113.10")
+					testELB[i].NetworkInterfaces[0].SystemIpAddresses = append(testELB[0].NetworkInterfaces[0].SystemIpAddresses, "203.0.113.11")
 				}
 
 				testSecurityGroups := helper.NewTestEmptySecurityGroups()
@@ -373,17 +373,17 @@ var _ = Describe("ensureElasticLoadBalancer", func() {
 		Context("add a port to the elastic load balancer", func() {
 			It("create the port", func() {
 				ctx := context.Background()
-				testIPAddress := "192.168.0.1"
+				testIPAddress := "203.0.113.1"
 				existedELB := helper.NewTestElasticLoadBalancer(loadBalancerName)
 				existedELB[0].VIP = testIPAddress
-				existedELB[0].NetworkInterfaces[0].SystemIpAddresses = append(existedELB[0].NetworkInterfaces[0].SystemIpAddresses, "192.168.0.10")
-				existedELB[0].NetworkInterfaces[0].SystemIpAddresses = append(existedELB[0].NetworkInterfaces[0].SystemIpAddresses, "192.168.0.11")
+				existedELB[0].NetworkInterfaces[0].SystemIpAddresses = append(existedELB[0].NetworkInterfaces[0].SystemIpAddresses, "203.0.113.10")
+				existedELB[0].NetworkInterfaces[0].SystemIpAddresses = append(existedELB[0].NetworkInterfaces[0].SystemIpAddresses, "203.0.113.11")
 				testDesire := helper.NewTestElasticLoadBalancerWithTwoPort(loadBalancerName)
 				testELB := helper.NewTestElasticLoadBalancerWithTwoPort(loadBalancerName)
 				for i := range testELB {
 					testELB[i].VIP = testIPAddress
-					testELB[i].NetworkInterfaces[0].SystemIpAddresses = append(testELB[i].NetworkInterfaces[0].SystemIpAddresses, "192.168.0.10")
-					testELB[i].NetworkInterfaces[0].SystemIpAddresses = append(testELB[i].NetworkInterfaces[0].SystemIpAddresses, "192.168.0.11")
+					testELB[i].NetworkInterfaces[0].SystemIpAddresses = append(testELB[i].NetworkInterfaces[0].SystemIpAddresses, "203.0.113.10")
+					testELB[i].NetworkInterfaces[0].SystemIpAddresses = append(testELB[i].NetworkInterfaces[0].SystemIpAddresses, "203.0.113.11")
 				}
 				testSecurityGroups := helper.NewTestEmptySecurityGroups()
 
@@ -467,19 +467,19 @@ var _ = Describe("ensureElasticLoadBalancer", func() {
 		Context("delete one port from the elastic load balancer", func() {
 			It("delete the port", func() {
 				ctx := context.Background()
-				testIPAddress := "192.168.0.1"
+				testIPAddress := "203.0.113.1"
 				existedELB := helper.NewTestElasticLoadBalancerWithTwoPort(loadBalancerName)
 				for i := range existedELB {
 					existedELB[i].VIP = testIPAddress
-					existedELB[i].NetworkInterfaces[0].SystemIpAddresses = append(existedELB[i].NetworkInterfaces[0].SystemIpAddresses, "192.168.0.10")
-					existedELB[i].NetworkInterfaces[0].SystemIpAddresses = append(existedELB[i].NetworkInterfaces[0].SystemIpAddresses, "192.168.0.11")
+					existedELB[i].NetworkInterfaces[0].SystemIpAddresses = append(existedELB[i].NetworkInterfaces[0].SystemIpAddresses, "203.0.113.10")
+					existedELB[i].NetworkInterfaces[0].SystemIpAddresses = append(existedELB[i].NetworkInterfaces[0].SystemIpAddresses, "203.0.113.11")
 				}
 				testDesire := helper.NewTestElasticLoadBalancer(loadBalancerName)
 				testELB := helper.NewTestElasticLoadBalancer(loadBalancerName)
 				for i := range testELB {
 					testELB[i].VIP = testIPAddress
-					testELB[i].NetworkInterfaces[0].SystemIpAddresses = append(testELB[i].NetworkInterfaces[0].SystemIpAddresses, "192.168.0.10")
-					testELB[i].NetworkInterfaces[0].SystemIpAddresses = append(testELB[i].NetworkInterfaces[0].SystemIpAddresses, "192.168.0.11")
+					testELB[i].NetworkInterfaces[0].SystemIpAddresses = append(testELB[i].NetworkInterfaces[0].SystemIpAddresses, "203.0.113.10")
+					testELB[i].NetworkInterfaces[0].SystemIpAddresses = append(testELB[i].NetworkInterfaces[0].SystemIpAddresses, "203.0.113.11")
 				}
 				testSecurityGroups := helper.NewTestEmptySecurityGroups()
 
@@ -563,12 +563,12 @@ var _ = Describe("ensureElasticLoadBalancer", func() {
 		Context("update two ports to the elastic load balancer", func() {
 			It("update the ports", func() {
 				ctx := context.Background()
-				testIPAddress := "192.168.0.1"
+				testIPAddress := "203.0.113.1"
 				existedELB := helper.NewTestElasticLoadBalancerWithTwoPort(loadBalancerName)
 				for i := range existedELB {
 					existedELB[i].VIP = testIPAddress
-					existedELB[i].NetworkInterfaces[0].SystemIpAddresses = append(existedELB[i].NetworkInterfaces[0].SystemIpAddresses, "192.168.0.10")
-					existedELB[i].NetworkInterfaces[0].SystemIpAddresses = append(existedELB[i].NetworkInterfaces[0].SystemIpAddresses, "192.168.0.11")
+					existedELB[i].NetworkInterfaces[0].SystemIpAddresses = append(existedELB[i].NetworkInterfaces[0].SystemIpAddresses, "203.0.113.10")
+					existedELB[i].NetworkInterfaces[0].SystemIpAddresses = append(existedELB[i].NetworkInterfaces[0].SystemIpAddresses, "203.0.113.11")
 				}
 				testDesire := helper.NewTestElasticLoadBalancerWithTwoPort(loadBalancerName)
 				testDesire[0].LoadBalancerPort = 8080
@@ -578,8 +578,8 @@ var _ = Describe("ensureElasticLoadBalancer", func() {
 				testELB[1].LoadBalancerPort = 8443
 				for i := range testELB {
 					testELB[i].VIP = testIPAddress
-					testELB[i].NetworkInterfaces[0].SystemIpAddresses = append(testELB[i].NetworkInterfaces[0].SystemIpAddresses, "192.168.0.10")
-					testELB[i].NetworkInterfaces[0].SystemIpAddresses = append(testELB[i].NetworkInterfaces[0].SystemIpAddresses, "192.168.0.11")
+					testELB[i].NetworkInterfaces[0].SystemIpAddresses = append(testELB[i].NetworkInterfaces[0].SystemIpAddresses, "203.0.113.10")
+					testELB[i].NetworkInterfaces[0].SystemIpAddresses = append(testELB[i].NetworkInterfaces[0].SystemIpAddresses, "203.0.113.11")
 				}
 				testSecurityGroups := helper.NewTestEmptySecurityGroups()
 
@@ -753,19 +753,19 @@ var _ = Describe("ensureElasticLoadBalancer", func() {
 		Context("update a port to the elastic load balancer", func() {
 			It("update the port", func() {
 				ctx := context.Background()
-				testIPAddress := "192.168.0.1"
+				testIPAddress := "203.0.113.1"
 				existedELB := helper.NewTestElasticLoadBalancer(loadBalancerName)
 				existedELB[0].VIP = testIPAddress
-				existedELB[0].NetworkInterfaces[0].SystemIpAddresses = append(existedELB[0].NetworkInterfaces[0].SystemIpAddresses, "192.168.0.10")
-				existedELB[0].NetworkInterfaces[0].SystemIpAddresses = append(existedELB[0].NetworkInterfaces[0].SystemIpAddresses, "192.168.0.11")
+				existedELB[0].NetworkInterfaces[0].SystemIpAddresses = append(existedELB[0].NetworkInterfaces[0].SystemIpAddresses, "203.0.113.10")
+				existedELB[0].NetworkInterfaces[0].SystemIpAddresses = append(existedELB[0].NetworkInterfaces[0].SystemIpAddresses, "203.0.113.11")
 				testDesire := helper.NewTestElasticLoadBalancer(loadBalancerName)
 				testDesire[0].LoadBalancerPort = 8080
 				testELB := helper.NewTestElasticLoadBalancer(loadBalancerName)
 				testELB[0].LoadBalancerPort = 8080
 				for i := range testELB {
 					testELB[i].VIP = testIPAddress
-					testELB[i].NetworkInterfaces[0].SystemIpAddresses = append(testELB[i].NetworkInterfaces[0].SystemIpAddresses, "192.168.0.10")
-					testELB[i].NetworkInterfaces[0].SystemIpAddresses = append(testELB[i].NetworkInterfaces[0].SystemIpAddresses, "192.168.0.11")
+					testELB[i].NetworkInterfaces[0].SystemIpAddresses = append(testELB[i].NetworkInterfaces[0].SystemIpAddresses, "203.0.113.10")
+					testELB[i].NetworkInterfaces[0].SystemIpAddresses = append(testELB[i].NetworkInterfaces[0].SystemIpAddresses, "203.0.113.11")
 				}
 				testSecurityGroups := helper.NewTestEmptySecurityGroups()
 
@@ -889,7 +889,7 @@ var _ = Describe("ensureElasticLoadBalancer", func() {
 				registeredInstance := helper.NewTestInstance()
 				registeredInstance.InstanceID = "testinstance2"
 				registeredInstance.InstanceUniqueID = "i-xyzw5678"
-				registeredInstance.PublicIPAddress = "203.0.113.2"
+				registeredInstance.PublicIPAddress = "203.0.113.1"
 				registeredInstance.PrivateIPAddress = "192.168.0.101"
 				existedELB := helper.NewTestElasticLoadBalancer(loadBalancerName)
 				existedELB[0].VIP = testIPAddress
@@ -982,7 +982,7 @@ var _ = Describe("ensureElasticLoadBalancer", func() {
 				deregisteredInstance := helper.NewTestInstance()
 				deregisteredInstance.InstanceID = "testinstance2"
 				deregisteredInstance.InstanceUniqueID = "i-xyzw5678"
-				deregisteredInstance.PublicIPAddress = "203.0.113.2"
+				deregisteredInstance.PublicIPAddress = "203.0.113.1"
 				deregisteredInstance.PrivateIPAddress = "192.168.0.101"
 				existedELB := helper.NewTestElasticLoadBalancer(loadBalancerName)
 				existedELB[0].VIP = testIPAddress
@@ -1198,10 +1198,10 @@ var _ = Describe("securityGroupRulesOfElasticLoadBalancer", func() {
 				ctx := context.Background()
 
 				testELB := &helper.NewTestElasticLoadBalancer(loadBalancerName)[0]
-				testELB.VIP = "198.168.0.1"
+				testELB.VIP = "203.0.113.1"
 				testELB.HealthCheckTarget = "ICMP"
-				testELB.NetworkInterfaces[0].SystemIpAddresses = append(testELB.NetworkInterfaces[0].SystemIpAddresses, "192.168.0.10")
-				testELB.NetworkInterfaces[0].SystemIpAddresses = append(testELB.NetworkInterfaces[0].SystemIpAddresses, "192.168.0.11")
+				testELB.NetworkInterfaces[0].SystemIpAddresses = append(testELB.NetworkInterfaces[0].SystemIpAddresses, "203.0.113.10")
+				testELB.NetworkInterfaces[0].SystemIpAddresses = append(testELB.NetworkInterfaces[0].SystemIpAddresses, "203.0.113.11")
 
 				wantSecurityGroupRules := []nifcloud.SecurityGroupRule{
 					{
@@ -1238,9 +1238,9 @@ var _ = Describe("securityGroupRulesOfElasticLoadBalancer", func() {
 				ctx := context.Background()
 
 				testELB := &helper.NewTestElasticLoadBalancer(loadBalancerName)[0]
-				testELB.VIP = "198.168.0.1"
-				testELB.NetworkInterfaces[0].SystemIpAddresses = append(testELB.NetworkInterfaces[0].SystemIpAddresses, "192.168.0.10")
-				testELB.NetworkInterfaces[0].SystemIpAddresses = append(testELB.NetworkInterfaces[0].SystemIpAddresses, "192.168.0.11")
+				testELB.VIP = "203.0.113.1"
+				testELB.NetworkInterfaces[0].SystemIpAddresses = append(testELB.NetworkInterfaces[0].SystemIpAddresses, "203.0.113.10")
+				testELB.NetworkInterfaces[0].SystemIpAddresses = append(testELB.NetworkInterfaces[0].SystemIpAddresses, "203.0.113.11")
 
 				wantSecurityGroupRules := []nifcloud.SecurityGroupRule{
 					{
@@ -1480,8 +1480,8 @@ var _ = Describe("ensureElasticLoadBalancerDeleted", func() {
 			ctx := context.Background()
 
 			testELB := helper.NewTestElasticLoadBalancer(loadBalancerName)
-			testELB[0].VIP = "192.168.0.1"
-			testELB[0].NetworkInterfaces[0].SystemIpAddresses = []string{"192.168.0.10", "192.168.0.11"}
+			testELB[0].VIP = "203.0.113.1"
+			testELB[0].NetworkInterfaces[0].SystemIpAddresses = []string{"203.0.113.10", "203.0.113.11"}
 			testSecurityGroups := helper.NewTestEmptySecurityGroups()
 
 			c := nifcloud.NewMockCloudAPIClient(ctrl)

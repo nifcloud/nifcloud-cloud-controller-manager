@@ -78,7 +78,7 @@ type ElasticLoadBalancer struct {
 	HealthCheckTarget             string
 	HealthCheckInterval           int32
 	HealthCheckUnhealthyThreshold int32
-	NetworkInterfaces            []NetworkInterface
+	NetworkInterfaces             []NetworkInterface
 }
 
 // NetworkInterface is network interface detail

@@ -162,7 +162,7 @@ func (c *Cloud) ensureElasticLoadBalancer(ctx context.Context, loadBalancerName 
 			if err := c.client.DeregisterInstancesFromElasticLoadBalancer(ctx, &currentLB, toDeregister); err != nil {
 				return nil, fmt.Errorf("failed to deregister instances: %w", err)
 			}
-			if err := c.denySecurityGroupRulesFromElasticLoadBalancer(ctx, &currentLB, toRegister); err != nil {
+			if err := c.denySecurityGroupRulesFromElasticLoadBalancer(ctx, &currentLB, toDeregister); err != nil {
 				return nil, fmt.Errorf("failed to deny security group rules from elastic load balancer: %w", err)
 			}
 		}

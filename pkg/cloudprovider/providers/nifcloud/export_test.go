@@ -17,6 +17,7 @@ var ExportMaxLoadBalancerNameLength = maxLoadBalancerNameLength
 // nifcloud_elastic_load_balancer.go
 
 var ExportGetElasticLoadBalancer = (*Cloud).getElasticLoadBalancer
+var ExportEnsureElasticLoadBalancer = (*Cloud).ensureElasticLoadBalancer
 
 // nifcloud_error_code.go
 

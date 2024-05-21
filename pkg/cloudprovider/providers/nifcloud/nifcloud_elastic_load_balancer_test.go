@@ -1159,3 +1159,71 @@ var _ = Describe("securityGroupRulesOfElasticLoadBalancer", func() {
 	})
 })
 
+var _ = Describe("updateElasticLoadBalancer", func() {
+	var ctrl *gomock.Controller
+	var region string = "east1"
+	var clusterName string = "testCluster"
+	var loadBalancerUID types.UID
+	var loadBalancerName string
+	var testService *corev1.Service
+
+	BeforeEach(func() {
+		ctrl = gomock.NewController(GinkgoT())
+		loadBalancerUID = types.UID(uuid.NewString())
+		loadBalancerName = strings.Replace(string(loadBalancerUID), "-", "", -1)[:nifcloud.ExportMaxLoadBalancerNameLength]
+		testService = &corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "testlbsvc",
+				UID:  loadBalancerUID,
+			},
+		}
+	})
+
+	AfterEach(func() {
+		ctrl.Finish()
+	})
+
+	Context("the elastic load balancer is existed", func() {
+		It("return nil", func() {
+			ctx := context.Background()
+
+			testELB := helper.NewTestElasticLoadBalancer(loadBalancerName)
+
+			c := nifcloud.NewMockCloudAPIClient(ctrl)
+			c.EXPECT().
+				DescribeElasticLoadBalancers(gomock.Any(), gomock.Eq(loadBalancerName)).
+				Return(testELB, nil).
+				Times(1)
+
+			cloud := &nifcloud.Cloud{}
+			cloud.SetClint(c)
+			cloud.SetRegion(region)
+
+			err := nifcloud.ExportUpdateElasticLoadBalancer(cloud, ctx, clusterName, testService)
+			Expect(err).ShouldNot(HaveOccurred())
+		})
+	})
+
+	Context("the elastic load balancer is not existed", func() {
+		It("return nil", func() {
+			ctx := context.Background()
+
+			testELB := []nifcloud.ElasticLoadBalancer{}
+			notFoundErr := helper.NewMockAPIError(nifcloud.ExportErrorCodeElasticLoadBalancerNotFound)
+
+			c := nifcloud.NewMockCloudAPIClient(ctrl)
+			c.EXPECT().
+				DescribeElasticLoadBalancers(gomock.Any(), gomock.Eq(loadBalancerName)).
+				Return(testELB, notFoundErr).
+				Times(1)
+
+			cloud := &nifcloud.Cloud{}
+			cloud.SetClint(c)
+			cloud.SetRegion(region)
+
+			err := nifcloud.ExportUpdateElasticLoadBalancer(cloud, ctx, clusterName, testService)
+			Expect(err).Should(HaveOccurred())
+			Expect(err).Should(Equal(notFoundErr))
+		})
+	})
+})

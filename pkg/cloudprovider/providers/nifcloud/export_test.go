@@ -16,6 +16,7 @@ var ExportMaxLoadBalancerNameLength = maxLoadBalancerNameLength
 
 // nifcloud_l4_load_balancer.go
 
+var ExportIsL4LoadBalancer = isL4LoadBalancer
 var ExportGetL4LoadBalancer = (*Cloud).getL4LoadBalancer
 
 // nifcloud_elastic_load_balancer.go

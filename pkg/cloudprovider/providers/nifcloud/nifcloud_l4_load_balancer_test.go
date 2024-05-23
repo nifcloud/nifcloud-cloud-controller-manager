@@ -17,6 +17,46 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+var _ = Describe("isL4LoadBalancer", func() {
+	Context("load balancer type is not defined", func() {
+		It("returns true", func() {
+			testAnnotations := map[string]string{}
+			isL4LB := nifcloud.ExportIsL4LoadBalancer(testAnnotations)
+			Expect(isL4LB).Should(BeTrue())
+		})
+	})
+
+	Context("load balancer type is empty", func() {
+		It("returns true", func() {
+			testAnnotations := map[string]string{
+				nifcloud.ServiceAnnotationLoadBalancerType: "",
+			}
+			isL4LB := nifcloud.ExportIsL4LoadBalancer(testAnnotations)
+			Expect(isL4LB).Should(BeTrue())
+		})
+	})
+
+	Context("load balancer type is lb", func() {
+		It("returns true", func() {
+			testAnnotations := map[string]string{
+				nifcloud.ServiceAnnotationLoadBalancerType: "lb",
+			}
+			isL4LB := nifcloud.ExportIsL4LoadBalancer(testAnnotations)
+			Expect(isL4LB).Should(BeTrue())
+		})
+	})
+
+	Context("load balancer type is not lb", func() {
+		It("returns false", func() {
+			testAnnotations := map[string]string{
+				nifcloud.ServiceAnnotationLoadBalancerType: "any",
+			}
+			isL4LB := nifcloud.ExportIsL4LoadBalancer(testAnnotations)
+			Expect(isL4LB).Should(BeFalse())
+		})
+	})
+})
+
 var _ = Describe("getL4LoadBalancer", func() {
 	var ctrl *gomock.Controller
 	var region string = "east1"

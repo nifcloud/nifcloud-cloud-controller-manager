@@ -13,6 +13,7 @@ func (c *Cloud) SetRegion(region string) {
 // nifcloud_load_balancer.go
 
 var ExportMaxLoadBalancerNameLength = maxLoadBalancerNameLength
+var ExportValidateLoadBalancerAnnotations = validateLoadBalancerAnnotations
 
 // nifcloud_elastic_load_balancer.go
 

@@ -66,7 +66,7 @@ var _ = Describe("getElasticLoadBalancer", func() {
 				Times(1)
 
 			cloud := &nifcloud.Cloud{}
-			cloud.SetClint(c)
+			cloud.SetClient(c)
 			cloud.SetRegion(region)
 
 			status, exists, err := nifcloud.ExportGetElasticLoadBalancer(cloud, ctx, clusterName, service)
@@ -96,7 +96,7 @@ var _ = Describe("getElasticLoadBalancer", func() {
 				Times(1)
 
 			cloud := &nifcloud.Cloud{}
-			cloud.SetClint(c)
+			cloud.SetClient(c)
 			cloud.SetRegion(region)
 
 			status, exists, err := nifcloud.ExportGetElasticLoadBalancer(cloud, ctx, clusterName, service)
@@ -128,7 +128,7 @@ var _ = Describe("getElasticLoadBalancer", func() {
 				Times(1)
 
 			cloud := &nifcloud.Cloud{}
-			cloud.SetClint(c)
+			cloud.SetClient(c)
 			cloud.SetRegion(region)
 
 			status, exists, err := nifcloud.ExportGetElasticLoadBalancer(cloud, ctx, clusterName, service)
@@ -236,7 +236,7 @@ var _ = Describe("ensureElasticLoadBalancer", func() {
 					Times(3)
 
 				cloud := &nifcloud.Cloud{}
-				cloud.SetClint(c)
+				cloud.SetClient(c)
 				cloud.SetRegion(region)
 
 				status, err := nifcloud.ExportEnsureElasticLoadBalancer(cloud, ctx, loadBalancerName, testDesire)
@@ -352,7 +352,7 @@ var _ = Describe("ensureElasticLoadBalancer", func() {
 					Times(1)
 
 				cloud := &nifcloud.Cloud{}
-				cloud.SetClint(c)
+				cloud.SetClient(c)
 				cloud.SetRegion(region)
 
 				status, err := nifcloud.ExportEnsureElasticLoadBalancer(cloud, ctx, loadBalancerName, testDesire)
@@ -446,7 +446,7 @@ var _ = Describe("ensureElasticLoadBalancer", func() {
 					Times(3)
 
 				cloud := &nifcloud.Cloud{}
-				cloud.SetClint(c)
+				cloud.SetClient(c)
 				cloud.SetRegion(region)
 
 				status, err := nifcloud.ExportEnsureElasticLoadBalancer(cloud, ctx, loadBalancerName, testDesire)
@@ -540,7 +540,7 @@ var _ = Describe("ensureElasticLoadBalancer", func() {
 					Times(3)
 
 				cloud := &nifcloud.Cloud{}
-				cloud.SetClint(c)
+				cloud.SetClient(c)
 				cloud.SetRegion(region)
 
 				status, err := nifcloud.ExportEnsureElasticLoadBalancer(cloud, ctx, loadBalancerName, testDesire)
@@ -670,7 +670,7 @@ var _ = Describe("ensureElasticLoadBalancer", func() {
 					Times(6)
 
 				cloud := &nifcloud.Cloud{}
-				cloud.SetClint(c)
+				cloud.SetClient(c)
 				cloud.SetRegion(region)
 
 				status, err := nifcloud.ExportEnsureElasticLoadBalancer(cloud, ctx, loadBalancerName, testDesire)
@@ -761,7 +761,7 @@ var _ = Describe("ensureElasticLoadBalancer", func() {
 					Times(3)
 
 				cloud := &nifcloud.Cloud{}
-				cloud.SetClint(c)
+				cloud.SetClient(c)
 				cloud.SetRegion(region)
 
 				status, err := nifcloud.ExportEnsureElasticLoadBalancer(cloud, ctx, loadBalancerName, testDesire)
@@ -770,7 +770,7 @@ var _ = Describe("ensureElasticLoadBalancer", func() {
 			})
 		})
 
-		Context("deregister an instance to the elastic load balancer", func() {
+		Context("deregister an instance from the elastic load balancer", func() {
 			It("deregister the instance", func() {
 				ctx := context.Background()
 				testIPAddress := "192.168.0.1"
@@ -851,7 +851,7 @@ var _ = Describe("ensureElasticLoadBalancer", func() {
 					Times(3)
 
 				cloud := &nifcloud.Cloud{}
-				cloud.SetClint(c)
+				cloud.SetClient(c)
 				cloud.SetRegion(region)
 
 				status, err := nifcloud.ExportEnsureElasticLoadBalancer(cloud, ctx, loadBalancerName, testDesire)
@@ -1196,7 +1196,7 @@ var _ = Describe("updateElasticLoadBalancer", func() {
 				Times(1)
 
 			cloud := &nifcloud.Cloud{}
-			cloud.SetClint(c)
+			cloud.SetClient(c)
 			cloud.SetRegion(region)
 
 			err := nifcloud.ExportUpdateElasticLoadBalancer(cloud, ctx, clusterName, testService)
@@ -1218,7 +1218,7 @@ var _ = Describe("updateElasticLoadBalancer", func() {
 				Times(1)
 
 			cloud := &nifcloud.Cloud{}
-			cloud.SetClint(c)
+			cloud.SetClient(c)
 			cloud.SetRegion(region)
 
 			err := nifcloud.ExportUpdateElasticLoadBalancer(cloud, ctx, clusterName, testService)
@@ -1330,7 +1330,7 @@ var _ = Describe("ensureElasticLoadBalancerDeleted", func() {
 				Times(3)
 
 			cloud := &nifcloud.Cloud{}
-			cloud.SetClint(c)
+			cloud.SetClient(c)
 			cloud.SetRegion(region)
 
 			err := nifcloud.ExportEnsureElasticLoadBalancerDeleted(cloud, ctx, clusterName, testService)
@@ -1352,7 +1352,7 @@ var _ = Describe("ensureElasticLoadBalancerDeleted", func() {
 				Times(1)
 
 			cloud := &nifcloud.Cloud{}
-			cloud.SetClint(c)
+			cloud.SetClient(c)
 			cloud.SetRegion(region)
 
 			err := nifcloud.ExportEnsureElasticLoadBalancerDeleted(cloud, ctx, clusterName, testService)

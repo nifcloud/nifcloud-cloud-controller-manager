@@ -2,7 +2,7 @@ package nifcloud
 
 // nifcloud.go
 
-func (c *Cloud) SetClint(client CloudAPIClient) {
+func (c *Cloud) SetClient(client CloudAPIClient) {
 	c.client = client
 }
 

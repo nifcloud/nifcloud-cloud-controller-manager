@@ -71,24 +71,21 @@ func (c *Cloud) ensureL4LoadBalancer(ctx context.Context, loadBalancerName strin
 	klog.Infof("desire: %v, current: %v", desire, current)
 
 	loadBalancerResourceChanged := false
-	if len(current) < len(desire) {
-		toCreate := l4LoadBalancerDifferences(desire, current)
-		for _, lb := range toCreate {
-			klog.Infof("Creating LoadBalancer %q (%d -> %d)", lb.Name, lb.LoadBalancerPort, lb.InstancePort)
-			if err := c.client.RegisterPortWithLoadBalancer(ctx, &lb); err != nil {
-				return nil, fmt.Errorf("failed to add port to load balancer: %w", err)
-			}
-			loadBalancerResourceChanged = true
+	toCreate := l4LoadBalancerDifferences(desire, current)
+	for _, lb := range toCreate {
+		klog.Infof("Creating LoadBalancer %q (%d -> %d)", lb.Name, lb.LoadBalancerPort, lb.InstancePort)
+		if err := c.client.RegisterPortWithLoadBalancer(ctx, &lb); err != nil {
+			return nil, fmt.Errorf("failed to add port to load balancer: %w", err)
 		}
-	} else if len(current) > len(desire) {
-		toDelete := l4LoadBalancerDifferences(current, desire)
-		for _, lb := range toDelete {
-			klog.Infof("Deleting LoadBalancer %q (%d -> %d)", lb.Name, lb.LoadBalancerPort, lb.InstancePort)
-			if err := c.client.DeleteLoadBalancer(ctx, &lb); err != nil {
-				return nil, fmt.Errorf("failed to delete load balancer: %w", err)
-			}
-			loadBalancerResourceChanged = true
+		loadBalancerResourceChanged = true
+	}
+	toDelete := l4LoadBalancerDifferences(current, desire)
+	for _, lb := range toDelete {
+		klog.Infof("Deleting LoadBalancer %q (%d -> %d)", lb.Name, lb.LoadBalancerPort, lb.InstancePort)
+		if err := c.client.DeleteLoadBalancer(ctx, &lb); err != nil {
+			return nil, fmt.Errorf("failed to delete load balancer: %w", err)
 		}
+		loadBalancerResourceChanged = true
 	}
 
 	// fetch load balancers again to update latest load balancer info

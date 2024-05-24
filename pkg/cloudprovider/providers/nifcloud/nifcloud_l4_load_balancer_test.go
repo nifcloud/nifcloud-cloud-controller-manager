@@ -177,3 +177,467 @@ var _ = Describe("getL4LoadBalancer", func() {
 		})
 	})
 })
+
+var _ = Describe("ensureL4LoadBalancer", func() {
+	var ctrl *gomock.Controller
+	var region string = "east1"
+	var loadBalancerUID types.UID
+	var loadBalancerName string
+
+	BeforeEach(func() {
+		ctrl = gomock.NewController(GinkgoT())
+		loadBalancerUID = types.UID(uuid.NewString())
+		loadBalancerName = strings.Replace(string(loadBalancerUID), "-", "", -1)[:nifcloud.ExportMaxLoadBalancerNameLength]
+	})
+
+	AfterEach(func() {
+		ctrl.Finish()
+	})
+
+	Context("the specified l4 load balancer is not existed", func() {
+		Context("the l4 load balancer has one port", func() {
+			It("create the l4 load balancer", func() {
+				ctx := context.Background()
+				testIPAddress := "203.0.113.1"
+				testDesire := helper.NewTestL4LoadBalancer(loadBalancerName)
+
+				expectedStatus := &corev1.LoadBalancerStatus{
+					Ingress: []corev1.LoadBalancerIngress{
+						{
+							IP: testIPAddress,
+						},
+					},
+				}
+
+				c := nifcloud.NewMockCloudAPIClient(ctrl)
+				notFoundErr := helper.NewMockAPIError(nifcloud.ExportErrorCodeLoadBalancerNotFound)
+				c.EXPECT().
+					DescribeLoadBalancers(gomock.Any(), gomock.Eq(loadBalancerName)).
+					Return([]nifcloud.LoadBalancer{}, notFoundErr).
+					Times(1)
+				c.EXPECT().
+					CreateLoadBalancer(gomock.Any(), gomock.Eq(&testDesire[0])).
+					Return(testIPAddress, nil).
+					Times(1)
+
+				cloud := &nifcloud.Cloud{}
+				cloud.SetClient(c)
+				cloud.SetRegion(region)
+
+				status, err := nifcloud.ExportEnsureL4LoadBalancer(cloud, ctx, loadBalancerName, testDesire)
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(*status).Should(Equal(*expectedStatus))
+			})
+		})
+
+		Context("the l4 load balancer has two ports", func() {
+			It("create the l4 load balancer", func() {
+				ctx := context.Background()
+				testIPAddress := "203.0.113.1"
+				testDesire := helper.NewTestL4LoadBalancerWithTwoPort(loadBalancerName)
+
+				expectedStatus := &corev1.LoadBalancerStatus{
+					Ingress: []corev1.LoadBalancerIngress{
+						{
+							IP: testIPAddress,
+						},
+					},
+				}
+
+				c := nifcloud.NewMockCloudAPIClient(ctrl)
+				notFoundErr := helper.NewMockAPIError(nifcloud.ExportErrorCodeLoadBalancerNotFound)
+				c.EXPECT().
+					DescribeLoadBalancers(gomock.Any(), gomock.Eq(loadBalancerName)).
+					Return([]nifcloud.LoadBalancer{}, notFoundErr).
+					Times(1)
+				c.EXPECT().
+					CreateLoadBalancer(gomock.Any(), gomock.Eq(&testDesire[0])).
+					Return(testIPAddress, nil).
+					Times(1)
+				c.EXPECT().
+					RegisterPortWithLoadBalancer(gomock.Any(), gomock.Eq(&testDesire[1])).
+					Return(nil).
+					Times(1)
+
+				cloud := &nifcloud.Cloud{}
+				cloud.SetClient(c)
+				cloud.SetRegion(region)
+
+				status, err := nifcloud.ExportEnsureL4LoadBalancer(cloud, ctx, loadBalancerName, testDesire)
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(*status).Should(Equal(*expectedStatus))
+			})
+		})
+	})
+
+	Context("the specified l4 load balancer is existed", func() {
+		Context("add a port to the l4 load balancer", func() {
+			It("create the l4 load balancer", func() {
+				ctx := context.Background()
+				testIPAddress := "203.0.113.1"
+				existedLB := helper.NewTestL4LoadBalancer(loadBalancerName)
+				existedLB[0].VIP = testIPAddress
+				testDesire := helper.NewTestL4LoadBalancerWithTwoPort(loadBalancerName)
+				updatedLB := helper.NewTestL4LoadBalancerWithTwoPort(loadBalancerName)
+				for i := range updatedLB {
+					updatedLB[i].VIP = testIPAddress
+				}
+
+				expectedStatus := &corev1.LoadBalancerStatus{
+					Ingress: []corev1.LoadBalancerIngress{
+						{
+							IP: testIPAddress,
+						},
+					},
+				}
+
+				c := nifcloud.NewMockCloudAPIClient(ctrl)
+				gomock.InOrder(
+					c.EXPECT().
+						DescribeLoadBalancers(gomock.Any(), gomock.Eq(loadBalancerName)).
+						Return(existedLB, nil).
+						Times(1),
+					c.EXPECT().
+						DescribeLoadBalancers(gomock.Any(), gomock.Eq(loadBalancerName)).
+						Return(updatedLB, nil).
+						Times(1),
+				)
+
+				c.EXPECT().
+					RegisterPortWithLoadBalancer(gomock.Any(), gomock.Eq(&testDesire[1])).
+					Return(nil).
+					Times(1)
+
+				cloud := &nifcloud.Cloud{}
+				cloud.SetClient(c)
+				cloud.SetRegion(region)
+
+				status, err := nifcloud.ExportEnsureL4LoadBalancer(cloud, ctx, loadBalancerName, testDesire)
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(*status).Should(Equal(*expectedStatus))
+			})
+		})
+
+		Context("delete one port from the l4 load balancer", func() {
+			It("delete the port", func() {
+				ctx := context.Background()
+				testIPAddress := "203.0.113.1"
+				existedLB := helper.NewTestL4LoadBalancerWithTwoPort(loadBalancerName)
+				for i := range existedLB {
+					existedLB[i].VIP = testIPAddress
+				}
+				testDesire := helper.NewTestL4LoadBalancer(loadBalancerName)
+				updatedLB := helper.NewTestL4LoadBalancer(loadBalancerName)
+				updatedLB[0].VIP = testIPAddress
+
+				expectedStatus := &corev1.LoadBalancerStatus{
+					Ingress: []corev1.LoadBalancerIngress{
+						{
+							IP: testIPAddress,
+						},
+					},
+				}
+
+				c := nifcloud.NewMockCloudAPIClient(ctrl)
+				gomock.InOrder(
+					c.EXPECT().
+						DescribeLoadBalancers(gomock.Any(), gomock.Eq(loadBalancerName)).
+						Return(existedLB, nil).
+						Times(1),
+					c.EXPECT().
+						DescribeLoadBalancers(gomock.Any(), gomock.Eq(loadBalancerName)).
+						Return(updatedLB, nil).
+						Times(1),
+				)
+
+				c.EXPECT().
+					DeleteLoadBalancer(gomock.Any(), gomock.Eq(&existedLB[1])).
+					Return(nil).
+					Times(1)
+
+				cloud := &nifcloud.Cloud{}
+				cloud.SetClient(c)
+				cloud.SetRegion(region)
+
+				status, err := nifcloud.ExportEnsureL4LoadBalancer(cloud, ctx, loadBalancerName, testDesire)
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(*status).Should(Equal(*expectedStatus))
+			})
+		})
+
+		Context("update one port of the l4 load balancer", func() {
+			It("update the port", func() {
+				ctx := context.Background()
+				testIPAddress := "203.0.113.1"
+				existedLB := helper.NewTestL4LoadBalancer(loadBalancerName)
+				existedLB[0].VIP = testIPAddress
+				testDesire := helper.NewTestL4LoadBalancer(loadBalancerName)
+				testDesire[0].LoadBalancerPort = 8080
+				updatedLB := helper.NewTestL4LoadBalancer(loadBalancerName)
+				updatedLB[0].VIP = testIPAddress
+				updatedLB[0].LoadBalancerPort = 8080
+
+				expectedStatus := &corev1.LoadBalancerStatus{
+					Ingress: []corev1.LoadBalancerIngress{
+						{
+							IP: testIPAddress,
+						},
+					},
+				}
+
+				c := nifcloud.NewMockCloudAPIClient(ctrl)
+				gomock.InOrder(
+					c.EXPECT().
+						DescribeLoadBalancers(gomock.Any(), gomock.Eq(loadBalancerName)).
+						Return(existedLB, nil).
+						Times(1),
+					c.EXPECT().
+						DescribeLoadBalancers(gomock.Any(), gomock.Eq(loadBalancerName)).
+						Return(updatedLB, nil).
+						Times(1),
+				)
+
+				c.EXPECT().
+					RegisterPortWithLoadBalancer(gomock.Any(), gomock.Eq(&testDesire[0])).
+					Return(nil).
+					Times(1)
+				c.EXPECT().
+					DeleteLoadBalancer(gomock.Any(), gomock.Eq(&existedLB[0])).
+					Return(nil).
+					Times(1)
+
+				cloud := &nifcloud.Cloud{}
+				cloud.SetClient(c)
+				cloud.SetRegion(region)
+
+				status, err := nifcloud.ExportEnsureL4LoadBalancer(cloud, ctx, loadBalancerName, testDesire)
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(*status).Should(Equal(*expectedStatus))
+			})
+		})
+
+		Context("register an instance to the l4 load balancer", func() {
+			It("register the instance", func() {
+				ctx := context.Background()
+				testIPAddress := "203.0.113.1"
+				registeredInstance := helper.NewTestInstance()
+				registeredInstance.InstanceID = "testinstance2"
+				registeredInstance.InstanceUniqueID = "i-xyzw5678"
+				registeredInstance.PublicIPAddress = "203.0.113.1"
+				registeredInstance.PrivateIPAddress = "192.168.0.101"
+				existedLB := helper.NewTestL4LoadBalancer(loadBalancerName)
+				existedLB[0].VIP = testIPAddress
+				testDesire := helper.NewTestL4LoadBalancer(loadBalancerName)
+				testDesire[0].BalancingTargets = append(testDesire[0].BalancingTargets, *registeredInstance)
+
+				expectedStatus := &corev1.LoadBalancerStatus{
+					Ingress: []corev1.LoadBalancerIngress{
+						{
+							IP: testIPAddress,
+						},
+					},
+				}
+
+				c := nifcloud.NewMockCloudAPIClient(ctrl)
+				c.EXPECT().
+					DescribeLoadBalancers(gomock.Any(), gomock.Eq(loadBalancerName)).
+					Return(existedLB, nil).
+					Times(1)
+
+				c.EXPECT().
+					RegisterInstancesWithLoadBalancer(gomock.Any(), gomock.Eq(&existedLB[0]), []nifcloud.Instance{*registeredInstance}).
+					Return(nil).
+					Times(1)
+
+				cloud := &nifcloud.Cloud{}
+				cloud.SetClient(c)
+				cloud.SetRegion(region)
+
+				status, err := nifcloud.ExportEnsureL4LoadBalancer(cloud, ctx, loadBalancerName, testDesire)
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(*status).Should(Equal(*expectedStatus))
+			})
+		})
+
+		Context("deregister an instance from the l4 load balancer", func() {
+			It("deregister the instance", func() {
+				ctx := context.Background()
+				testIPAddress := "203.0.113.1"
+				deregisteredInstance := helper.NewTestInstance()
+				deregisteredInstance.InstanceID = "testinstance2"
+				deregisteredInstance.InstanceUniqueID = "i-xyzw5678"
+				deregisteredInstance.PublicIPAddress = "203.0.113.1"
+				deregisteredInstance.PrivateIPAddress = "192.168.0.101"
+				existedLB := helper.NewTestL4LoadBalancer(loadBalancerName)
+				existedLB[0].VIP = testIPAddress
+				existedLB[0].BalancingTargets = append(existedLB[0].BalancingTargets, *deregisteredInstance)
+				testDesire := helper.NewTestL4LoadBalancer(loadBalancerName)
+
+				expectedStatus := &corev1.LoadBalancerStatus{
+					Ingress: []corev1.LoadBalancerIngress{
+						{
+							IP: testIPAddress,
+						},
+					},
+				}
+
+				c := nifcloud.NewMockCloudAPIClient(ctrl)
+				c.EXPECT().
+					DescribeLoadBalancers(gomock.Any(), gomock.Eq(loadBalancerName)).
+					Return(existedLB, nil).
+					Times(1)
+
+				c.EXPECT().
+					DeregisterInstancesFromLoadBalancer(gomock.Any(), gomock.Eq(&existedLB[0]), []nifcloud.Instance{*deregisteredInstance}).
+					Return(nil).
+					Times(1)
+
+				cloud := &nifcloud.Cloud{}
+				cloud.SetClient(c)
+				cloud.SetRegion(region)
+
+				status, err := nifcloud.ExportEnsureL4LoadBalancer(cloud, ctx, loadBalancerName, testDesire)
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(*status).Should(Equal(*expectedStatus))
+			})
+		})
+
+		Context("add a filter to the l4 load balancer", func() {
+			It("add the filter", func() {
+				ctx := context.Background()
+				testIPAddress := "203.0.113.1"
+				existedLB := helper.NewTestL4LoadBalancer(loadBalancerName)
+				existedLB[0].VIP = testIPAddress
+				testDesire := helper.NewTestL4LoadBalancer(loadBalancerName)
+				testDesire[0].Filters = append(testDesire[0].Filters, "198.51.100.0/24")
+				testFilters := []nifcloud.Filter{
+					{
+						AddOnFilter: true,
+						IPAddress:   "198.51.100.0/24",
+					},
+				}
+
+				expectedStatus := &corev1.LoadBalancerStatus{
+					Ingress: []corev1.LoadBalancerIngress{
+						{
+							IP: testIPAddress,
+						},
+					},
+				}
+
+				c := nifcloud.NewMockCloudAPIClient(ctrl)
+				c.EXPECT().
+					DescribeLoadBalancers(gomock.Any(), gomock.Eq(loadBalancerName)).
+					Return(existedLB, nil).
+					Times(1)
+
+				c.EXPECT().
+					SetFilterForLoadBalancer(gomock.Any(), gomock.Eq(&existedLB[0]), testFilters).
+					Return(nil).
+					Times(1)
+
+				cloud := &nifcloud.Cloud{}
+				cloud.SetClient(c)
+				cloud.SetRegion(region)
+
+				status, err := nifcloud.ExportEnsureL4LoadBalancer(cloud, ctx, loadBalancerName, testDesire)
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(*status).Should(Equal(*expectedStatus))
+			})
+		})
+
+		Context("remove a filter from the l4 load balancer", func() {
+			It("remove the filter", func() {
+				ctx := context.Background()
+				testIPAddress := "203.0.113.1"
+				existedLB := helper.NewTestL4LoadBalancer(loadBalancerName)
+				existedLB[0].VIP = testIPAddress
+				existedLB[0].Filters = append(existedLB[0].Filters, "198.51.100.0/24")
+				testDesire := helper.NewTestL4LoadBalancer(loadBalancerName)
+				testFilters := []nifcloud.Filter{
+					{
+						AddOnFilter: false,
+						IPAddress:   "198.51.100.0/24",
+					},
+				}
+
+				expectedStatus := &corev1.LoadBalancerStatus{
+					Ingress: []corev1.LoadBalancerIngress{
+						{
+							IP: testIPAddress,
+						},
+					},
+				}
+
+				c := nifcloud.NewMockCloudAPIClient(ctrl)
+				c.EXPECT().
+					DescribeLoadBalancers(gomock.Any(), gomock.Eq(loadBalancerName)).
+					Return(existedLB, nil).
+					Times(1)
+
+				c.EXPECT().
+					SetFilterForLoadBalancer(gomock.Any(), gomock.Eq(&existedLB[0]), testFilters).
+					Return(nil).
+					Times(1)
+
+				cloud := &nifcloud.Cloud{}
+				cloud.SetClient(c)
+				cloud.SetRegion(region)
+
+				status, err := nifcloud.ExportEnsureL4LoadBalancer(cloud, ctx, loadBalancerName, testDesire)
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(*status).Should(Equal(*expectedStatus))
+			})
+		})
+
+		Context("update a filter of the l4 load balancer", func() {
+			It("update the filter", func() {
+				ctx := context.Background()
+				testIPAddress := "203.0.113.1"
+				existedLB := helper.NewTestL4LoadBalancer(loadBalancerName)
+				existedLB[0].VIP = testIPAddress
+				existedLB[0].Filters = append(existedLB[0].Filters, "198.51.100.0/24")
+				testDesire := helper.NewTestL4LoadBalancer(loadBalancerName)
+				testDesire[0].Filters = append(testDesire[0].Filters, "192.0.2.0/24")
+
+				testFilters := []nifcloud.Filter{
+					{
+						AddOnFilter: true,
+						IPAddress:   "192.0.2.0/24",
+					},
+					{
+						AddOnFilter: false,
+						IPAddress:   "198.51.100.0/24",
+					},
+				}
+
+				expectedStatus := &corev1.LoadBalancerStatus{
+					Ingress: []corev1.LoadBalancerIngress{
+						{
+							IP: testIPAddress,
+						},
+					},
+				}
+
+				c := nifcloud.NewMockCloudAPIClient(ctrl)
+				c.EXPECT().
+					DescribeLoadBalancers(gomock.Any(), gomock.Eq(loadBalancerName)).
+					Return(existedLB, nil).
+					Times(1)
+
+				c.EXPECT().
+					SetFilterForLoadBalancer(gomock.Any(), gomock.Eq(&existedLB[0]), testFilters).
+					Return(nil).
+					Times(1)
+
+				cloud := &nifcloud.Cloud{}
+				cloud.SetClient(c)
+				cloud.SetRegion(region)
+
+				status, err := nifcloud.ExportEnsureL4LoadBalancer(cloud, ctx, loadBalancerName, testDesire)
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(*status).Should(Equal(*expectedStatus))
+			})
+		})
+	})
+})

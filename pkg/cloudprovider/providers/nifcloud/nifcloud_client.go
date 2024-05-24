@@ -1,3 +1,4 @@
+//go:generate mockgen -source=$GOFILE -destination=zz_generated.mock_$GOFILE -package=$GOPACKAGE
 package nifcloud
 
 import (
@@ -77,7 +78,7 @@ type ElasticLoadBalancer struct {
 	HealthCheckTarget             string
 	HealthCheckInterval           int32
 	HealthCheckUnhealthyThreshold int32
-	NetworkInterfaces            []NetworkInterface
+	NetworkInterfaces             []NetworkInterface
 }
 
 // NetworkInterface is network interface detail

@@ -162,7 +162,7 @@ func (c *Cloud) ensureElasticLoadBalancer(ctx context.Context, loadBalancerName 
 			if err := c.client.DeregisterInstancesFromElasticLoadBalancer(ctx, &currentLB, toDeregister); err != nil {
 				return nil, fmt.Errorf("failed to deregister instances: %w", err)
 			}
-			if err := c.denySecurityGroupRulesFromElasticLoadBalancer(ctx, &currentLB, toRegister); err != nil {
+			if err := c.denySecurityGroupRulesFromElasticLoadBalancer(ctx, &currentLB, toDeregister); err != nil {
 				return nil, fmt.Errorf("failed to deny security group rules from elastic load balancer: %w", err)
 			}
 		}
@@ -399,7 +399,7 @@ func (c *Cloud) allowSecurityGroupRulesFromElasticLoadBalancer(ctx context.Conte
 		return err
 	}
 
-	securityGroupRules, err := c.securityGroupRulesOfElasticLoadBalancer(ctx, elasticLoadBalancer)
+	securityGroupRules, err := securityGroupRulesOfElasticLoadBalancer(ctx, elasticLoadBalancer)
 	if err != nil {
 		return err
 	}
@@ -435,7 +435,7 @@ func (c *Cloud) denySecurityGroupRulesFromElasticLoadBalancer(ctx context.Contex
 		return err
 	}
 
-	securityGroupRules, err := c.securityGroupRulesOfElasticLoadBalancer(ctx, elasticLoadBalancer)
+	securityGroupRules, err := securityGroupRulesOfElasticLoadBalancer(ctx, elasticLoadBalancer)
 	if err != nil {
 		return err
 	}
@@ -460,7 +460,7 @@ func (c *Cloud) denySecurityGroupRulesFromElasticLoadBalancer(ctx context.Contex
 	return nil
 }
 
-func (c *Cloud) securityGroupRulesOfElasticLoadBalancer(ctx context.Context, elasticLoadBalancer *ElasticLoadBalancer) ([]SecurityGroupRule, error) {
+func securityGroupRulesOfElasticLoadBalancer(ctx context.Context, elasticLoadBalancer *ElasticLoadBalancer) ([]SecurityGroupRule, error) {
 	securityGroupRules := []SecurityGroupRule{}
 	VIPRanges := []string{elasticLoadBalancer.VIP}
 
@@ -584,7 +584,7 @@ func separateHealthCheckTarget(healthCheckTarget string) (string, string) {
 	return match[1], match[2]
 }
 
-func (c *Cloud) updateElasticLoadBalancer(ctx context.Context, clusterName string, service *v1.Service, nodes []*v1.Node) error {
+func (c *Cloud) updateElasticLoadBalancer(ctx context.Context, clusterName string, service *v1.Service) error {
 	// get elastic load balancer name
 	loadBalancerName := c.GetLoadBalancerName(ctx, clusterName, service)
 
@@ -597,10 +597,7 @@ func (c *Cloud) updateElasticLoadBalancer(ctx context.Context, clusterName strin
 		return fmt.Errorf("load balancer %q not found", loadBalancerName)
 	}
 
-	// ensure load balancer
-	_, err = c.EnsureLoadBalancer(ctx, clusterName, service, nodes)
-
-	return err
+	return nil
 }
 
 func (c *Cloud) ensureElasticLoadBalancerDeleted(ctx context.Context, clusterName string, service *v1.Service) error {

@@ -735,3 +735,72 @@ var _ = Describe("NewL4LoadBalancerFromService", func() {
 		})
 	})
 })
+
+var _ = Describe("updateL4LoadBalancer", func() {
+	var ctrl *gomock.Controller
+	var region string = "east1"
+	var clusterName string = "testCluster"
+	var loadBalancerUID types.UID
+	var loadBalancerName string
+	var testService *corev1.Service
+
+	BeforeEach(func() {
+		ctrl = gomock.NewController(GinkgoT())
+		loadBalancerUID = types.UID(uuid.NewString())
+		loadBalancerName = strings.Replace(string(loadBalancerUID), "-", "", -1)[:nifcloud.ExportMaxLoadBalancerNameLength]
+		testService = &corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "testlbsvc",
+				UID:  loadBalancerUID,
+			},
+		}
+	})
+
+	AfterEach(func() {
+		ctrl.Finish()
+	})
+
+	Context("the l4 load balancer is existed", func() {
+		It("return nil", func() {
+			ctx := context.Background()
+
+			testLB := helper.NewTestL4LoadBalancer(loadBalancerName)
+
+			c := nifcloud.NewMockCloudAPIClient(ctrl)
+			c.EXPECT().
+				DescribeLoadBalancers(gomock.Any(), gomock.Eq(loadBalancerName)).
+				Return(testLB, nil).
+				Times(1)
+
+			cloud := &nifcloud.Cloud{}
+			cloud.SetClient(c)
+			cloud.SetRegion(region)
+
+			err := nifcloud.ExportUpdateL4LoadBalancer(cloud, ctx, clusterName, testService)
+			Expect(err).ShouldNot(HaveOccurred())
+		})
+	})
+
+	Context("the l4 load balancer is not existed", func() {
+		It("return nil", func() {
+			ctx := context.Background()
+
+			testLB := []nifcloud.LoadBalancer{}
+			notFoundErr := helper.NewMockAPIError(nifcloud.ExportErrorCodeLoadBalancerNotFound)
+
+			c := nifcloud.NewMockCloudAPIClient(ctrl)
+			c.EXPECT().
+				DescribeLoadBalancers(gomock.Any(), gomock.Eq(loadBalancerName)).
+				Return(testLB, notFoundErr).
+				Times(1)
+
+			cloud := &nifcloud.Cloud{}
+			cloud.SetClient(c)
+			cloud.SetRegion(region)
+
+			err := nifcloud.ExportUpdateL4LoadBalancer(cloud, ctx, clusterName, testService)
+			Expect(err).Should(HaveOccurred())
+			Expect(err).Should(Equal(notFoundErr))
+		})
+	})
+})

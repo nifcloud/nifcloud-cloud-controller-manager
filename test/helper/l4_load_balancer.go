@@ -21,6 +21,7 @@ func NewTestL4LoadBalancer(name string) []nifcloud.LoadBalancer {
 			HealthCheckTarget:             "TCP:30000",
 			HealthCheckInterval:           10,
 			HealthCheckUnhealthyThreshold: 1,
+			Filters:                       []string{},
 		},
 	}
 }
@@ -42,6 +43,7 @@ func NewTestL4LoadBalancerWithTwoPort(name string) []nifcloud.LoadBalancer {
 			HealthCheckTarget:             "TCP:30000",
 			HealthCheckInterval:           10,
 			HealthCheckUnhealthyThreshold: 1,
+			Filters:                       []string{},
 		},
 		{
 			Name:                          name,
@@ -55,6 +57,7 @@ func NewTestL4LoadBalancerWithTwoPort(name string) []nifcloud.LoadBalancer {
 			HealthCheckTarget:             "TCP:30001",
 			HealthCheckInterval:           10,
 			HealthCheckUnhealthyThreshold: 1,
+			Filters:                       []string{},
 		},
 	}
 }

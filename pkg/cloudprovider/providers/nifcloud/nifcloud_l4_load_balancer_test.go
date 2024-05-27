@@ -641,3 +641,97 @@ var _ = Describe("ensureL4LoadBalancer", func() {
 		})
 	})
 })
+
+var _ = Describe("NewL4LoadBalancerFromService", func() {
+	var loadBalancerName string
+	var testService corev1.Service
+
+	BeforeEach(func() {
+		loadBalancerName = "testloadbalancer"
+		testService = corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "testlbsvc",
+				Annotations: map[string]string{
+					nifcloud.ServiceAnnotationLoadBalancerBalancingType:        "1",
+					nifcloud.ServiceAnnotationLoadBalancerAccountingType:       "1",
+					nifcloud.ServiceAnnotationLoadBalancerNetworkVolume:        "100",
+					nifcloud.ServiceAnnotationLoadBalancerPolicyType:           "standard",
+					nifcloud.ServiceAnnotationLoadBalancerHCInterval:           "10",
+					nifcloud.ServiceAnnotationLoadBalancerHCUnhealthyThreshold: "1",
+					nifcloud.ServiceAnnotationLoadBalancerHCProtocol:           "TCP",
+				},
+			},
+			Spec: corev1.ServiceSpec{
+				Ports: []corev1.ServicePort{
+					{
+						Port:     80,
+						NodePort: 30000,
+						Protocol: corev1.ProtocolTCP,
+					},
+				},
+			},
+		}
+	})
+
+	Context("given valid l4 load balancer", func() {
+		It("return the l4 load balancer", func() {
+			testInstances := []nifcloud.Instance{*helper.NewTestInstance()}
+			expectLB := helper.NewTestL4LoadBalancer(loadBalancerName)
+			gotLB, err := nifcloud.NewL4LoadBalancerFromService(loadBalancerName, testInstances, &testService)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(gotLB).Should(Equal(expectLB))
+		})
+	})
+
+	Context("given l4 load balancer that has two ports", func() {
+		It("return the l4 load balancer", func() {
+			testService.Spec.Ports = append(testService.Spec.Ports, corev1.ServicePort{
+				Port:     443,
+				NodePort: 30001,
+				Protocol: corev1.ProtocolTCP,
+			},
+			)
+			testInstances := []nifcloud.Instance{*helper.NewTestInstance()}
+			expectLB := helper.NewTestL4LoadBalancerWithTwoPort(loadBalancerName)
+			gotLB, err := nifcloud.NewL4LoadBalancerFromService(loadBalancerName, testInstances, &testService)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(gotLB).Should(Equal(expectLB))
+		})
+	})
+
+	Context("given l4 load balancer that health check protocol is ICMP", func() {
+		It("return the l4 load balancer", func() {
+			testService.Annotations[nifcloud.ServiceAnnotationLoadBalancerHCProtocol] = "ICMP"
+			testInstances := []nifcloud.Instance{*helper.NewTestInstance()}
+			expectLB := helper.NewTestL4LoadBalancer(loadBalancerName)
+			expectLB[0].HealthCheckTarget = "ICMP"
+			gotLB, err := nifcloud.NewL4LoadBalancerFromService(loadBalancerName, testInstances, &testService)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(gotLB).Should(Equal(expectLB))
+		})
+	})
+
+	Context("given l4 load balancer that has a filter", func() {
+		It("return the l4 load balancer", func() {
+			testService.Spec.LoadBalancerSourceRanges = append(testService.Spec.LoadBalancerSourceRanges, "192.0.2.0/24")
+			testInstances := []nifcloud.Instance{*helper.NewTestInstance()}
+			expectLB := helper.NewTestL4LoadBalancer(loadBalancerName)
+			expectLB[0].Filters = append(expectLB[0].Filters, "192.0.2.0/24")
+			gotLB, err := nifcloud.NewL4LoadBalancerFromService(loadBalancerName, testInstances, &testService)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(gotLB).Should(Equal(expectLB))
+		})
+	})
+
+	Context("given l4 load balancer that has a filter (/32)", func() {
+		It("return the l4 load balancer", func() {
+			testService.Spec.LoadBalancerSourceRanges = append(testService.Spec.LoadBalancerSourceRanges, "192.0.2.0/32")
+			testInstances := []nifcloud.Instance{*helper.NewTestInstance()}
+			expectLB := helper.NewTestL4LoadBalancer(loadBalancerName)
+			expectLB[0].Filters = append(expectLB[0].Filters, "192.0.2.0")
+			gotLB, err := nifcloud.NewL4LoadBalancerFromService(loadBalancerName, testInstances, &testService)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(gotLB).Should(Equal(expectLB))
+		})
+	})
+})

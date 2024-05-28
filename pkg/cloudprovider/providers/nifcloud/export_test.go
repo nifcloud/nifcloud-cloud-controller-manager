@@ -24,6 +24,7 @@ var ExportEnsureL4LoadBalancerDeleted = (*Cloud).ensureL4LoadBalancerDeleted
 var ExportFindL4LoadBalancer = findL4LoadBalancer
 var ExportL4LoadBalancerDifferences = l4LoadBalancerDifferences
 var ExportL4LoadBalancingTargetsDifferences = l4LoadBalancingTargetsDifferences
+var ExportFilterDifferences = filterDifferences
 
 // nifcloud_elastic_load_balancer.go
 

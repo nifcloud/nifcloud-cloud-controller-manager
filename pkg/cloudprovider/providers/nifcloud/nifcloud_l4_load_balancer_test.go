@@ -987,3 +987,41 @@ var _ = Describe("l4LoadBalancingTargetsDifferences", func() {
 		})
 	})
 })
+
+var _ = Describe("filterDifferences", func() {
+	Context("target has an filter is not existed in other", func() {
+		It("return the filter", func() {
+			targetFilter := []string{"198.51.100.0/24", "192.0.2.0/24"}
+			otherFilter := []string{"198.51.100.0/24"}
+
+			expectFilter := []string{"192.0.2.0/24"}
+
+			gotInstance := nifcloud.ExportFilterDifferences(targetFilter, otherFilter)
+			Expect(gotInstance).Should(Equal(expectFilter))
+		})
+	})
+
+	Context("target and other have same instances", func() {
+		It("return empty array", func() {
+			targetFilter := []string{"198.51.100.0/24", "192.0.2.0/24"}
+			otherFilter := []string{"198.51.100.0/24", "192.0.2.0/24"}
+
+			expectFilter := []string{}
+
+			gotInstance := nifcloud.ExportFilterDifferences(targetFilter, otherFilter)
+			Expect(gotInstance).Should(Equal(expectFilter))
+		})
+	})
+
+	Context("other has an instance is not existed in target", func() {
+		It("return empty array", func() {
+			targetFilter := []string{"198.51.100.0/24"}
+			otherFilter := []string{"198.51.100.0/24", "192.0.2.0/24"}
+
+			expectFilter := []string{}
+
+			gotInstance := nifcloud.ExportFilterDifferences(targetFilter, otherFilter)
+			Expect(gotInstance).Should(Equal(expectFilter))
+		})
+	})
+})

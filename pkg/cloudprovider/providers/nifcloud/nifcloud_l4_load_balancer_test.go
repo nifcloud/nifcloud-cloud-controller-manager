@@ -941,3 +941,49 @@ var _ = Describe("l4LoadBalancerDifferences", func() {
 		})
 	})
 })
+
+var _ = Describe("l4LoadBalancingTargetsDifferences", func() {
+	Context("target has an instance is not existed in other", func() {
+		It("return the instance", func() {
+			targetInstance := []nifcloud.Instance{*helper.NewTestInstance(), *helper.NewTestInstance()}
+			targetInstance[1].InstanceUniqueID = "i-xyzw5678"
+			targetInstance[1].InstanceID = "testinstance2"
+			otherInstance := []nifcloud.Instance{*helper.NewTestInstance()}
+
+			expectInstance := []nifcloud.Instance{targetInstance[1]}
+
+			gotInstance := nifcloud.ExportL4LoadBalancingTargetsDifferences(targetInstance, otherInstance)
+			Expect(gotInstance).Should(Equal(expectInstance))
+		})
+	})
+
+	Context("target and other have same instances", func() {
+		It("return empty array", func() {
+			targetInstance := []nifcloud.Instance{*helper.NewTestInstance(), *helper.NewTestInstance()}
+			targetInstance[1].InstanceUniqueID = "i-xyzw5678"
+			targetInstance[1].InstanceID = "testinstance2"
+			otherInstance := []nifcloud.Instance{*helper.NewTestInstance(), *helper.NewTestInstance()}
+			otherInstance[1].InstanceUniqueID = "i-xyzw5678"
+			otherInstance[1].InstanceID = "testinstance2"
+
+			expectInstance := []nifcloud.Instance{}
+
+			gotInstance := nifcloud.ExportL4LoadBalancingTargetsDifferences(targetInstance, otherInstance)
+			Expect(gotInstance).Should(Equal(expectInstance))
+		})
+	})
+
+	Context("other has an instance is not existed in target", func() {
+		It("return empty array", func() {
+			targetInstance := []nifcloud.Instance{*helper.NewTestInstance()}
+			otherInstance := []nifcloud.Instance{*helper.NewTestInstance(), *helper.NewTestInstance()}
+			otherInstance[1].InstanceUniqueID = "i-xyzw5678"
+			otherInstance[1].InstanceID = "testinstance2"
+
+			expectInstance := []nifcloud.Instance{}
+
+			gotInstance := nifcloud.ExportL4LoadBalancingTargetsDifferences(targetInstance, otherInstance)
+			Expect(gotInstance).Should(Equal(expectInstance))
+		})
+	})
+})

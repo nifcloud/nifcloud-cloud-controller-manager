@@ -876,3 +876,28 @@ var _ = Describe("ensureL4LoadBalancerDeleted", func() {
 		})
 	})
 })
+
+var _ = Describe("findL4LoadBalancer", func() {
+	var loadBalancerName = "testloadbalancer"
+
+	Context("target is existed in the array", func() {
+		It("return target elastic load balancer", func() {
+			testLB := helper.NewTestL4LoadBalancerWithTwoPort(loadBalancerName)
+			target := testLB[0]
+
+			gotLB, err := nifcloud.ExportFindL4LoadBalancer(testLB, target)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(gotLB).Should(Equal(&testLB[0]))
+		})
+	})
+
+	Context("target is not existed in the array", func() {
+		It("return error", func() {
+			testLB := helper.NewTestL4LoadBalancerWithTwoPort(loadBalancerName)
+			target := helper.NewTestL4LoadBalancer("notexistedloadbalancer")[0]
+
+			_, err := nifcloud.ExportFindL4LoadBalancer(testLB, target)
+			Expect(err).Should(HaveOccurred())
+		})
+	})
+})

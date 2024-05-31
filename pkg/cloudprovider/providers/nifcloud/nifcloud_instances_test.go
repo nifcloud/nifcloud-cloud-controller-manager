@@ -277,3 +277,83 @@ var _ = Describe("InstanceID", func() {
 		})
 	})
 })
+
+var _ = Describe("InstanceType", func() {
+	var ctrl *gomock.Controller
+	var region string = "east1"
+
+	BeforeEach(func() {
+		ctrl = gomock.NewController(GinkgoT())
+	})
+
+	AfterEach(func() {
+		ctrl.Finish()
+	})
+
+	Context("single instance is existed", func() {
+		It("return the InstanceType", func() {
+			ctx := context.Background()
+			testInstances := []nifcloud.Instance{*helper.NewTestInstance()}
+			nodeName := testInstances[0].InstanceID
+
+			c := nifcloud.NewMockCloudAPIClient(ctrl)
+			c.EXPECT().
+				DescribeInstancesByInstanceID(gomock.Any(), []string{nodeName}).
+				Return(testInstances, nil).
+				Times(1)
+
+			cloud := &nifcloud.Cloud{}
+			cloud.SetClient(c)
+			cloud.SetRegion(region)
+
+			gotInstanceType, err := cloud.InstanceType(ctx, types.NodeName(nodeName))
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(gotInstanceType).Should(Equal(testInstances[0].InstanceType))
+		})
+	})
+
+	Context("the instance is not existed", func() {
+		It("return error", func() {
+			ctx := context.Background()
+			testInstances := []nifcloud.Instance{}
+			nodeName := "testinstance"
+
+			notFoundErr := helper.NewMockAPIError(nifcloud.ExportErrorCodeInstanceNotFound)
+			c := nifcloud.NewMockCloudAPIClient(ctrl)
+			c.EXPECT().
+				DescribeInstancesByInstanceID(gomock.Any(), []string{nodeName}).
+				Return(testInstances, notFoundErr).
+				Times(1)
+
+			cloud := &nifcloud.Cloud{}
+			cloud.SetClient(c)
+			cloud.SetRegion(region)
+
+			gotInstanceType, err := cloud.InstanceType(ctx, types.NodeName(nodeName))
+			Expect(err).Should(HaveOccurred())
+			Expect(gotInstanceType).Should(BeEmpty())
+		})
+	})
+
+	Context("some instances have same InstanceID are existed", func() {
+		It("return error", func() {
+			ctx := context.Background()
+			testInstances := []nifcloud.Instance{*helper.NewTestInstance(), *helper.NewTestInstance()}
+			nodeName := testInstances[0].InstanceID
+
+			c := nifcloud.NewMockCloudAPIClient(ctrl)
+			c.EXPECT().
+				DescribeInstancesByInstanceID(gomock.Any(), []string{nodeName}).
+				Return(testInstances, nil).
+				Times(1)
+
+			cloud := &nifcloud.Cloud{}
+			cloud.SetClient(c)
+			cloud.SetRegion(region)
+
+			gotInstanceType, err := cloud.InstanceType(ctx, types.NodeName(nodeName))
+			Expect(err).Should(HaveOccurred())
+			Expect(gotInstanceType).Should(BeEmpty())
+		})
+	})
+})

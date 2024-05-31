@@ -15,6 +15,18 @@ func (c *Cloud) SetRegion(region string) {
 var ExportMaxLoadBalancerNameLength = maxLoadBalancerNameLength
 var ExportValidateLoadBalancerAnnotations = validateLoadBalancerAnnotations
 
+// nifcloud_l4_load_balancer.go
+
+var ExportIsL4LoadBalancer = isL4LoadBalancer
+var ExportGetL4LoadBalancer = (*Cloud).getL4LoadBalancer
+var ExportEnsureL4LoadBalancer = (*Cloud).ensureL4LoadBalancer
+var ExportUpdateL4LoadBalancer = (*Cloud).updateL4LoadBalancer
+var ExportEnsureL4LoadBalancerDeleted = (*Cloud).ensureL4LoadBalancerDeleted
+var ExportFindL4LoadBalancer = findL4LoadBalancer
+var ExportL4LoadBalancerDifferences = l4LoadBalancerDifferences
+var ExportL4LoadBalancingTargetsDifferences = l4LoadBalancingTargetsDifferences
+var ExportFilterDifferences = filterDifferences
+
 // nifcloud_elastic_load_balancer.go
 
 var ExportGetElasticLoadBalancer = (*Cloud).getElasticLoadBalancer

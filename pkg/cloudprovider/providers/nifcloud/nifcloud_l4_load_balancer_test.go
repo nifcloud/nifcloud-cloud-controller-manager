@@ -855,7 +855,7 @@ var _ = Describe("ensureL4LoadBalancerDeleted", func() {
 	})
 
 	Context("the l4 load balancer is not existed", func() {
-		It("delete nil", func() {
+		It("return nil", func() {
 			ctx := context.Background()
 
 			testLB := []nifcloud.LoadBalancer{}

@@ -12,6 +12,7 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
+	cloudprovider "k8s.io/cloud-provider"
 )
 
 var _ = Describe("NodeAddresses", func() {
@@ -777,6 +778,121 @@ var _ = Describe("InstanceShutdown", func() {
 			stopped, err := cloud.InstanceShutdown(ctx, testNode)
 			Expect(err).Should(HaveOccurred())
 			Expect(stopped).Should(BeFalse())
+		})
+	})
+})
+
+var _ = Describe("InstanceMetadata", func() {
+	var ctrl *gomock.Controller
+	var region string = "east1"
+
+	BeforeEach(func() {
+		ctrl = gomock.NewController(GinkgoT())
+	})
+
+	AfterEach(func() {
+		ctrl.Finish()
+	})
+
+	Context("single instance is existed", func() {
+		It("return the metadata", func() {
+			ctx := context.Background()
+			testInstances := []nifcloud.Instance{*helper.NewTestInstance()}
+			testProviderID := "nifcloud:///east-11/i-abcd1234"
+			testInstanceUniqueID := "i-abcd1234"
+			testNode := &v1.Node{
+				Spec: v1.NodeSpec{
+					ProviderID: testProviderID,
+				},
+			}
+
+			expectedMetadata := &cloudprovider.InstanceMetadata{
+				ProviderID:   testProviderID,
+				InstanceType: testInstances[0].InstanceType,
+				NodeAddresses: []v1.NodeAddress{
+					{
+						Type:    v1.NodeExternalIP,
+						Address: testInstances[0].PublicIPAddress,
+					},
+					{
+						Type:    v1.NodeInternalIP,
+						Address: testInstances[0].PrivateIPAddress,
+					},
+				},
+				Zone:   testInstances[0].Zone,
+				Region: region,
+			}
+
+			c := nifcloud.NewMockCloudAPIClient(ctrl)
+			c.EXPECT().
+				DescribeInstancesByInstanceUniqueID(gomock.Any(), []string{testInstanceUniqueID}).
+				Return(testInstances, nil).
+				Times(1)
+
+			cloud := &nifcloud.Cloud{}
+			cloud.SetClient(c)
+			cloud.SetRegion(region)
+
+			metadata, err := cloud.InstanceMetadata(ctx, testNode)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(metadata).Should(Equal(expectedMetadata))
+		})
+	})
+
+	Context("the instance is not existed", func() {
+		It("return error", func() {
+			ctx := context.Background()
+			testInstances := []nifcloud.Instance{}
+			testProviderID := "nifcloud:///east-11/i-abcd1234"
+			testInstanceUniqueID := "i-abcd1234"
+			testNode := &v1.Node{
+				Spec: v1.NodeSpec{
+					ProviderID: testProviderID,
+				},
+			}
+
+			notFoundErr := helper.NewMockAPIError(nifcloud.ExportErrorCodeInstanceNotFound)
+			c := nifcloud.NewMockCloudAPIClient(ctrl)
+			c.EXPECT().
+				DescribeInstancesByInstanceUniqueID(gomock.Any(), []string{testInstanceUniqueID}).
+				Return(testInstances, notFoundErr).
+				Times(1)
+
+			cloud := &nifcloud.Cloud{}
+			cloud.SetClient(c)
+			cloud.SetRegion(region)
+
+			metadata, err := cloud.InstanceMetadata(ctx, testNode)
+			Expect(err).Should(HaveOccurred())
+			Expect(metadata).Should(BeNil())
+		})
+	})
+
+	Context("some instances have same InstanceID are existed", func() {
+		It("return error", func() {
+			ctx := context.Background()
+			testInstances := []nifcloud.Instance{*helper.NewTestInstance(), *helper.NewTestInstance()}
+			testProviderID := "nifcloud:///east-11/i-abcd1234"
+			testInstanceUniqueID := "i-abcd1234"
+			testNode := &v1.Node{
+				Spec: v1.NodeSpec{
+					ProviderID: testProviderID,
+				},
+			}
+
+			c := nifcloud.NewMockCloudAPIClient(ctrl)
+			c.EXPECT().
+				DescribeInstancesByInstanceUniqueID(gomock.Any(), []string{testInstanceUniqueID}).
+				Return(testInstances, nil).
+				Times(1)
+
+			cloud := &nifcloud.Cloud{}
+			cloud.SetClient(c)
+			cloud.SetRegion(region)
+
+			metadata, err := cloud.InstanceMetadata(ctx, testNode)
+			Expect(err).Should(HaveOccurred())
+			Expect(metadata).Should(BeNil())
 		})
 	})
 })

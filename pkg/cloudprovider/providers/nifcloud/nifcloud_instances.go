@@ -2,7 +2,6 @@ package nifcloud
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"regexp"
 
@@ -139,7 +138,7 @@ func (c *Cloud) InstanceShutdownByProviderID(ctx context.Context, providerID str
 func (c *Cloud) InstanceExists(ctx context.Context, node *v1.Node) (bool, error) {
 	_, err := c.getInstance(ctx, node)
 	if err != nil {
-		if errors.Is(err, cloudprovider.InstanceNotFound) {
+		if isAPIError(err, errorCodeInstanceNotFound) {
 			return false, nil
 		}
 		return false, err

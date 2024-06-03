@@ -523,3 +523,130 @@ var _ = Describe("InstanceExistsByProviderID", func() {
 		})
 	})
 })
+
+var _ = Describe("InstanceExists", func() {
+	var ctrl *gomock.Controller
+	var region string = "east1"
+
+	BeforeEach(func() {
+		ctrl = gomock.NewController(GinkgoT())
+	})
+
+	AfterEach(func() {
+		ctrl.Finish()
+	})
+
+	Context("single instance is existed", func() {
+		It("return true", func() {
+			ctx := context.Background()
+			testInstances := []nifcloud.Instance{*helper.NewTestInstance()}
+			testProviderID := "nifcloud:///east-11/i-abcd1234"
+			testInstanceUniqueID := "i-abcd1234"
+			testNode := &v1.Node{
+				Spec: v1.NodeSpec{
+					ProviderID: testProviderID,
+				},
+			}
+
+			c := nifcloud.NewMockCloudAPIClient(ctrl)
+			c.EXPECT().
+				DescribeInstancesByInstanceUniqueID(gomock.Any(), []string{testInstanceUniqueID}).
+				Return(testInstances, nil).
+				Times(1)
+
+			cloud := &nifcloud.Cloud{}
+			cloud.SetClient(c)
+			cloud.SetRegion(region)
+
+			exist, err := cloud.InstanceExists(ctx, testNode)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(exist).Should(BeTrue())
+		})
+	})
+
+	Context("the instance is not existed", func() {
+		It("return false and error", func() {
+			ctx := context.Background()
+			testInstances := []nifcloud.Instance{}
+			testProviderID := "nifcloud:///east-11/i-abcd1234"
+			testInstanceUniqueID := "i-abcd1234"
+			testNode := &v1.Node{
+				Spec: v1.NodeSpec{
+					ProviderID: testProviderID,
+				},
+			}
+
+			notFoundErr := helper.NewMockAPIError(nifcloud.ExportErrorCodeInstanceNotFound)
+			c := nifcloud.NewMockCloudAPIClient(ctrl)
+			c.EXPECT().
+				DescribeInstancesByInstanceUniqueID(gomock.Any(), []string{testInstanceUniqueID}).
+				Return(testInstances, notFoundErr).
+				Times(1)
+
+			cloud := &nifcloud.Cloud{}
+			cloud.SetClient(c)
+			cloud.SetRegion(region)
+
+			exist, err := cloud.InstanceExists(ctx, testNode)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(exist).Should(BeFalse())
+		})
+	})
+
+	Context("some instances have same InstanceID are existed", func() {
+		It("return false and error", func() {
+			ctx := context.Background()
+			testInstances := []nifcloud.Instance{*helper.NewTestInstance(), *helper.NewTestInstance()}
+			testProviderID := "nifcloud:///east-11/i-abcd1234"
+			testInstanceUniqueID := "i-abcd1234"
+			testNode := &v1.Node{
+				Spec: v1.NodeSpec{
+					ProviderID: testProviderID,
+				},
+			}
+
+			c := nifcloud.NewMockCloudAPIClient(ctrl)
+			c.EXPECT().
+				DescribeInstancesByInstanceUniqueID(gomock.Any(), []string{testInstanceUniqueID}).
+				Return(testInstances, nil).
+				Times(1)
+
+			cloud := &nifcloud.Cloud{}
+			cloud.SetClient(c)
+			cloud.SetRegion(region)
+
+			exist, err := cloud.InstanceExists(ctx, testNode)
+			Expect(err).Should(HaveOccurred())
+			Expect(exist).Should(BeFalse())
+		})
+	})
+
+	Context("DescribeInstances return unknown error", func() {
+		It("return false and the error", func() {
+			ctx := context.Background()
+			testInstances := []nifcloud.Instance{}
+			testProviderID := "nifcloud:///east-11/i-abcd1234"
+			testInstanceUniqueID := "i-abcd1234"
+			testNode := &v1.Node{
+				Spec: v1.NodeSpec{
+					ProviderID: testProviderID,
+				},
+			}
+
+			unknownErr := helper.NewMockAPIError("client.unknown")
+			c := nifcloud.NewMockCloudAPIClient(ctrl)
+			c.EXPECT().
+				DescribeInstancesByInstanceUniqueID(gomock.Any(), []string{testInstanceUniqueID}).
+				Return(testInstances, unknownErr).
+				Times(1)
+
+			cloud := &nifcloud.Cloud{}
+			cloud.SetClient(c)
+			cloud.SetRegion(region)
+
+			exist, err := cloud.InstanceExists(ctx, testNode)
+			Expect(err).Should(HaveOccurred())
+			Expect(exist).Should(BeFalse())
+		})
+	})
+})

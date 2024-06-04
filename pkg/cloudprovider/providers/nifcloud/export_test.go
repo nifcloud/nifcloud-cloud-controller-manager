@@ -12,6 +12,7 @@ func (c *Cloud) SetRegion(region string) {
 
 // nifcloud_instances.go
 var ExportGetInstance = (*Cloud).getInstance
+var ExportGetNodeAddress = getNodeAddress
 
 // nifcloud_load_balancer.go
 

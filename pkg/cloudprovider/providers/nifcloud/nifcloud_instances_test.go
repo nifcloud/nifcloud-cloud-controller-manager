@@ -996,3 +996,56 @@ var _ = Describe("getInstance", func() {
 		})
 	})
 })
+
+var _ = Describe("getNodeAddress", func() {
+	Context("given an instance has only public network", func() {
+		It("return the NodeAddress", func() {
+			testInstance := *helper.NewTestInstance()
+			testInstance.PrivateIPAddress = ""
+			expectedNodeAddress := []v1.NodeAddress{
+				{
+					Type:    v1.NodeExternalIP,
+					Address: testInstance.PublicIPAddress,
+				},
+			}
+
+			nodeAddress := nifcloud.ExportGetNodeAddress(testInstance)
+			Expect(nodeAddress).Should(Equal(expectedNodeAddress))
+		})
+	})
+
+	Context("given an instance has only private network", func() {
+		It("return the NodeAddress", func() {
+			testInstance := *helper.NewTestInstance()
+			testInstance.PublicIPAddress = ""
+			expectedNodeAddress := []v1.NodeAddress{
+				{
+					Type:    v1.NodeInternalIP,
+					Address: testInstance.PrivateIPAddress,
+				},
+			}
+
+			nodeAddress := nifcloud.ExportGetNodeAddress(testInstance)
+			Expect(nodeAddress).Should(Equal(expectedNodeAddress))
+		})
+	})
+
+	Context("given an instance has both of public and private network", func() {
+		It("return the NodeAddress", func() {
+			testInstance := *helper.NewTestInstance()
+			expectedNodeAddress := []v1.NodeAddress{
+				{
+					Type:    v1.NodeExternalIP,
+					Address: testInstance.PublicIPAddress,
+				},
+				{
+					Type:    v1.NodeInternalIP,
+					Address: testInstance.PrivateIPAddress,
+				},
+			}
+
+			nodeAddress := nifcloud.ExportGetNodeAddress(testInstance)
+			Expect(nodeAddress).Should(Equal(expectedNodeAddress))
+		})
+	})
+})

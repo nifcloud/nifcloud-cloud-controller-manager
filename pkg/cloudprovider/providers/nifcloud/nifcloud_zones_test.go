@@ -129,3 +129,92 @@ var _ = Describe("GetZone", func() {
 		})
 	})
 })
+
+var _ = Describe("GetZoneByProviderID", func() {
+	var ctrl *gomock.Controller
+	var region string = "east1"
+
+	BeforeEach(func() {
+		ctrl = gomock.NewController(GinkgoT())
+	})
+
+	AfterEach(func() {
+		ctrl.Finish()
+	})
+
+	Context("single instance is existed", func() {
+		It("return the Zone", func() {
+			ctx := context.Background()
+			testInstances := []nifcloud.Instance{*helper.NewTestInstance()}
+			testProviderID := "nifcloud:///east-11/i-abcd1234"
+			testInstanceUniqueID := "i-abcd1234"
+			expectedZone := cloudprovider.Zone{
+				FailureDomain: testInstances[0].Zone,
+				Region:        region,
+			}
+
+			c := nifcloud.NewMockCloudAPIClient(ctrl)
+			c.EXPECT().
+				DescribeInstancesByInstanceUniqueID(gomock.Any(), []string{testInstanceUniqueID}).
+				Return(testInstances, nil).
+				Times(1)
+
+			cloud := &nifcloud.Cloud{}
+			cloud.SetClient(c)
+			cloud.SetRegion(region)
+
+			gotZone, err := cloud.GetZoneByProviderID(ctx, testProviderID)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(gotZone).Should(Equal(expectedZone))
+		})
+	})
+
+	Context("the instance is not existed", func() {
+		It("return error", func() {
+			ctx := context.Background()
+			testInstances := []nifcloud.Instance{}
+			testProviderID := "nifcloud:///east-11/i-abcd1234"
+			testInstanceUniqueID := "i-abcd1234"
+			expectedZone := cloudprovider.Zone{}
+
+			notFoundErr := helper.NewMockAPIError(nifcloud.ExportErrorCodeInstanceNotFound)
+			c := nifcloud.NewMockCloudAPIClient(ctrl)
+			c.EXPECT().
+				DescribeInstancesByInstanceUniqueID(gomock.Any(), []string{testInstanceUniqueID}).
+				Return(testInstances, notFoundErr).
+				Times(1)
+
+			cloud := &nifcloud.Cloud{}
+			cloud.SetClient(c)
+			cloud.SetRegion(region)
+
+			gotZone, err := cloud.GetZoneByProviderID(ctx, testProviderID)
+			Expect(err).Should(HaveOccurred())
+			Expect(gotZone).Should(Equal(expectedZone))
+		})
+	})
+
+	Context("some instances have same InstanceID are existed", func() {
+		It("return error", func() {
+			ctx := context.Background()
+			testInstances := []nifcloud.Instance{*helper.NewTestInstance(), *helper.NewTestInstance()}
+			testProviderID := "nifcloud:///east-11/i-abcd1234"
+			testInstanceUniqueID := "i-abcd1234"
+			expectedZone := cloudprovider.Zone{}
+
+			c := nifcloud.NewMockCloudAPIClient(ctrl)
+			c.EXPECT().
+				DescribeInstancesByInstanceUniqueID(gomock.Any(), []string{testInstanceUniqueID}).
+				Return(testInstances, nil).
+				Times(1)
+
+			cloud := &nifcloud.Cloud{}
+			cloud.SetClient(c)
+			cloud.SetRegion(region)
+
+			gotZone, err := cloud.GetZoneByProviderID(ctx, testProviderID)
+			Expect(err).Should(HaveOccurred())
+			Expect(gotZone).Should(Equal(expectedZone))
+		})
+	})
+})

@@ -65,7 +65,7 @@ var _ = Describe("NodeAddresses", func() {
 			testInstances := []nifcloud.Instance{}
 			nodeName := "testinstance"
 
-			notFoundErr := helper.NewMockAPIError(nifcloud.ExportErrorCodeInstanceNotFound)
+			notFoundErr := cloudprovider.InstanceNotFound
 			c := nifcloud.NewMockCloudAPIClient(ctrl)
 			c.EXPECT().
 				DescribeInstancesByInstanceID(gomock.Any(), []string{nodeName}).
@@ -157,7 +157,7 @@ var _ = Describe("NodeAddressesByProviderID", func() {
 			testProviderID := "nifcloud:///east-11/i-abcd1234"
 			testInstanceUniqueID := "i-abcd1234"
 
-			notFoundErr := helper.NewMockAPIError(nifcloud.ExportErrorCodeInstanceNotFound)
+			notFoundErr := cloudprovider.InstanceNotFound
 			c := nifcloud.NewMockCloudAPIClient(ctrl)
 			c.EXPECT().
 				DescribeInstancesByInstanceUniqueID(gomock.Any(), []string{testInstanceUniqueID}).
@@ -239,7 +239,7 @@ var _ = Describe("InstanceID", func() {
 			testInstances := []nifcloud.Instance{}
 			nodeName := "testinstance"
 
-			notFoundErr := helper.NewMockAPIError(nifcloud.ExportErrorCodeInstanceNotFound)
+			notFoundErr := cloudprovider.InstanceNotFound
 			c := nifcloud.NewMockCloudAPIClient(ctrl)
 			c.EXPECT().
 				DescribeInstancesByInstanceID(gomock.Any(), []string{nodeName}).
@@ -319,7 +319,7 @@ var _ = Describe("InstanceType", func() {
 			testInstances := []nifcloud.Instance{}
 			nodeName := "testinstance"
 
-			notFoundErr := helper.NewMockAPIError(nifcloud.ExportErrorCodeInstanceNotFound)
+			notFoundErr := cloudprovider.InstanceNotFound
 			c := nifcloud.NewMockCloudAPIClient(ctrl)
 			c.EXPECT().
 				DescribeInstancesByInstanceID(gomock.Any(), []string{nodeName}).
@@ -401,7 +401,7 @@ var _ = Describe("InstanceTypeByProviderID", func() {
 			testProviderID := "nifcloud:///east-11/i-abcd1234"
 			testInstanceUniqueID := "i-abcd1234"
 
-			notFoundErr := helper.NewMockAPIError(nifcloud.ExportErrorCodeInstanceNotFound)
+			notFoundErr := cloudprovider.InstanceNotFound
 			c := nifcloud.NewMockCloudAPIClient(ctrl)
 			c.EXPECT().
 				DescribeInstancesByInstanceUniqueID(gomock.Any(), []string{testInstanceUniqueID}).
@@ -484,7 +484,7 @@ var _ = Describe("InstanceExistsByProviderID", func() {
 			testProviderID := "nifcloud:///east-11/i-abcd1234"
 			testInstanceUniqueID := "i-abcd1234"
 
-			notFoundErr := helper.NewMockAPIError(nifcloud.ExportErrorCodeInstanceNotFound)
+			notFoundErr := cloudprovider.InstanceNotFound
 			c := nifcloud.NewMockCloudAPIClient(ctrl)
 			c.EXPECT().
 				DescribeInstancesByInstanceUniqueID(gomock.Any(), []string{testInstanceUniqueID}).
@@ -577,7 +577,7 @@ var _ = Describe("InstanceExists", func() {
 				},
 			}
 
-			notFoundErr := helper.NewMockAPIError(nifcloud.ExportErrorCodeInstanceNotFound)
+			notFoundErr := cloudprovider.InstanceNotFound
 			c := nifcloud.NewMockCloudAPIClient(ctrl)
 			c.EXPECT().
 				DescribeInstancesByInstanceUniqueID(gomock.Any(), []string{testInstanceUniqueID}).
@@ -736,7 +736,7 @@ var _ = Describe("InstanceShutdown", func() {
 				},
 			}
 
-			notFoundErr := helper.NewMockAPIError(nifcloud.ExportErrorCodeInstanceNotFound)
+			notFoundErr := cloudprovider.InstanceNotFound
 			c := nifcloud.NewMockCloudAPIClient(ctrl)
 			c.EXPECT().
 				DescribeInstancesByInstanceUniqueID(gomock.Any(), []string{testInstanceUniqueID}).
@@ -851,7 +851,7 @@ var _ = Describe("InstanceMetadata", func() {
 				},
 			}
 
-			notFoundErr := helper.NewMockAPIError(nifcloud.ExportErrorCodeInstanceNotFound)
+			notFoundErr := cloudprovider.InstanceNotFound
 			c := nifcloud.NewMockCloudAPIClient(ctrl)
 			c.EXPECT().
 				DescribeInstancesByInstanceUniqueID(gomock.Any(), []string{testInstanceUniqueID}).
@@ -951,7 +951,7 @@ var _ = Describe("getInstance", func() {
 				},
 			}
 
-			notFoundErr := helper.NewMockAPIError(nifcloud.ExportErrorCodeInstanceNotFound)
+			notFoundErr := cloudprovider.InstanceNotFound
 			c := nifcloud.NewMockCloudAPIClient(ctrl)
 			c.EXPECT().
 				DescribeInstancesByInstanceUniqueID(gomock.Any(), []string{testInstanceUniqueID}).

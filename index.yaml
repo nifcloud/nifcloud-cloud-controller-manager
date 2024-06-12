@@ -1,0 +1,14 @@
+apiVersion: v1
+entries:
+  nifcloud-cloud-controller-manager:
+  - apiVersion: v2
+    appVersion: v1.2.0
+    created: "2024-06-12T07:47:02.593766751Z"
+    description: A Helm chart for NIFCLOUD cloud controller manager
+    digest: 499acc99a7b8483dd4136782e912b4963a922a8f51022b874ea94939347cc64a
+    name: nifcloud-cloud-controller-manager
+    type: application
+    urls:
+    - https://github.com/nifcloud/nifcloud-cloud-controller-manager/releases/download/v1.2.0/nifcloud-cloud-controller-manager-1.2.0.tgz
+    version: 1.2.0
+generated: "2024-06-12T07:47:02.593773323Z"

@@ -30,7 +30,7 @@
    ```
 2. Add helm repository.
    ```sh
-   helm repo add nifcloud-cloud-controller-manager https://raw.githubusercontent.com/nifcloud/nifcloud-cloud-controller-manager/main/charts
+   helm repo add nifcloud-cloud-controller-manager https://nifcloud.github.io/nifcloud-cloud-controller-manager
    helm repo update
    ```
 3. Install. (Please change the parameter `<REGION>` to your environment.)

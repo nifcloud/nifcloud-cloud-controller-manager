@@ -3,6 +3,7 @@
 PKG:=github.com/nifcloud/nifcloud-cloud-controller-manager
 IMAGE:=ghcr.io/nifcloud/nifcloud-cloud-controller-manager
 VERSION:=$(shell git describe --tags --dirty --match="v*")
+CHART_VERSION=${VERSION:v%=%}
 LDFLAGS:="-X k8s.io/component-base/version.gitVersion=$(VERSION) -s -w"
 
 build:
@@ -22,4 +23,4 @@ push:
 	docker push $(IMAGE):$(VERSION)
 
 helm-package:
-	cd charts; helm package nifcloud-cloud-controller-manager
+	cd charts; helm package nifcloud-cloud-controller-manager -d ../.cr-release-packages --version=${CHART_VERSION} --app-version=${VERSION}

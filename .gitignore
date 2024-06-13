@@ -1,5 +1,6 @@
 # Binaries for programs and plugins
 /bin
+/.cr-release-packages
 *.exe
 *.exe~
 *.dll

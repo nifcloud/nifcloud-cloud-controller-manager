@@ -83,4 +83,43 @@ var _ = Describe("nifcloudAPIClient", func() {
 			})
 		})
 	})
+
+	var _ = Describe("DescribeInstancesByInstanceUniqueID", func() {
+		Describe("given instance is existed", func() {
+			testInstanceUniqueIDs := []string{"i-abcd1234"}
+
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/describe_instances.xml")))
+				})
+			})
+
+			It("return the instance", func() {
+				ctx := context.Background()
+				expectedInstances := []nifcloud.Instance{*helper.NewTestInstance()}
+				gotInstances, gotErr := testNifcloudAPIClient.DescribeInstancesByInstanceUniqueID(ctx, testInstanceUniqueIDs)
+				Expect(gotErr).ShouldNot(HaveOccurred())
+				Expect(gotInstances).Should(Equal(expectedInstances))
+			})
+		})
+
+		Describe("given instance is not existed", func() {
+			testInstanceUniqueIDs := []string{"1-xxxx0000"}
+
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/describe_instances.xml")))
+				})
+			})
+
+			It("return InstanceNotFound error", func() {
+				ctx := context.Background()
+				gotInstances, gotErr := testNifcloudAPIClient.DescribeInstancesByInstanceUniqueID(ctx, testInstanceUniqueIDs)
+				Expect(gotErr).Should(Equal(cloudprovider.InstanceNotFound))
+				Expect(gotInstances).Should(BeNil())
+			})
+		})
+	})
 })

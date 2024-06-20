@@ -1,5 +1,11 @@
 package nifcloud
 
+import (
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/nifcloud/nifcloud-sdk-go/nifcloud"
+	"github.com/nifcloud/nifcloud-sdk-go/service/computing"
+)
+
 // nifcloud.go
 
 func (c *Cloud) SetClient(client CloudAPIClient) {
@@ -10,7 +16,25 @@ func (c *Cloud) SetRegion(region string) {
 	c.region = region
 }
 
+// nifcloud_client.go
+
+func NewNIFCLOUDAPIClientWithEndpoint(accessKeyID, secretAccessKey, region, endpoint string) CloudAPIClient {
+	cfg := nifcloud.NewConfig(accessKeyID, secretAccessKey, region)
+	cfg.EndpointResolverWithOptions = aws.EndpointResolverWithOptionsFunc(
+		func(_, region string, _ ...interface{}) (aws.Endpoint, error) {
+			return aws.Endpoint{
+				URL:           endpoint,
+				SigningRegion: region,
+			}, nil
+		},
+	)
+	return &nifcloudAPIClient{
+		client: computing.NewFromConfig(cfg),
+	}
+}
+
 // nifcloud_instances.go
+
 var ExportGetInstance = (*Cloud).getInstance
 var ExportGetNodeAddress = getNodeAddress
 

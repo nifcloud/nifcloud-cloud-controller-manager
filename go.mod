@@ -3,6 +3,7 @@ module github.com/nifcloud/nifcloud-cloud-controller-manager
 go 1.20
 
 require (
+	github.com/aws/aws-sdk-go-v2 v1.17.4
 	github.com/aws/smithy-go v1.14.2
 	github.com/google/uuid v1.3.1
 	github.com/nifcloud/nifcloud-sdk-go v1.22.1
@@ -24,7 +25,6 @@ require (
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20230305170008-8188dc5388df // indirect
 	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a // indirect
-	github.com/aws/aws-sdk-go-v2 v1.17.4 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect

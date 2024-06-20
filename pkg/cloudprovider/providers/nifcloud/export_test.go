@@ -10,6 +10,10 @@ func (c *Cloud) SetRegion(region string) {
 	c.region = region
 }
 
+// nifcloud_instances.go
+var ExportGetInstance = (*Cloud).getInstance
+var ExportGetNodeAddress = getNodeAddress
+
 // nifcloud_load_balancer.go
 
 var ExportMaxLoadBalancerNameLength = maxLoadBalancerNameLength

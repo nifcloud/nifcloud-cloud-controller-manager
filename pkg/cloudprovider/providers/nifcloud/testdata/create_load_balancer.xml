@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?><CreateLoadBalancerResponse xmlns="https://computing.api.nifcloud.com/api/"><CreateLoadBalancerResult><DNSName>203.0.113.5</DNSName></CreateLoadBalancerResult><ResponseMetadata><RequestId>f2eda179-abc4-4ebd-a38f-01bccb7bc242</RequestId></ResponseMetadata></CreateLoadBalancerResponse>

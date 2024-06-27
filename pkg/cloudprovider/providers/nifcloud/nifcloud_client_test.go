@@ -314,4 +314,51 @@ var _ = Describe("nifcloudAPIClient", func() {
 			})
 		})
 	})
+
+	var _ = Describe("ConfigureHealthCheck", func() {
+		Describe("configuring health check is success", func() {
+			testLoadBalancerName := "testl4lb"
+
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("LoadBalancerName")).Should(Equal(testLoadBalancerName))
+					Expect(r.Form.Get("HealthCheck.Target")).Should(Equal("TCP:30000"))
+					Expect(r.Form.Get("HealthCheck.UnhealthyThreshold")).Should(Equal("1"))
+					Expect(r.Form.Get("HealthCheck.Interval")).Should(Equal("10"))
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/configure_health_check.xml")))
+				})
+			})
+
+			It("return the l4 load balancer", func() {
+				ctx := context.Background()
+				expectedL4LoadBalancers := helper.NewTestL4LoadBalancer(testLoadBalancerName)
+				gotErr := testNifcloudAPIClient.ConfigureHealthCheck(ctx, &expectedL4LoadBalancers[0])
+				Expect(gotErr).ShouldNot(HaveOccurred())
+			})
+		})
+
+		Describe("the specified l4 load balancer is not existed", func() {
+			testLoadBalancerName := "testl4lb"
+
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("LoadBalancerName")).Should(Equal(testLoadBalancerName))
+					Expect(r.Form.Get("HealthCheck.Target")).Should(Equal("TCP:30000"))
+					Expect(r.Form.Get("HealthCheck.UnhealthyThreshold")).Should(Equal("1"))
+					Expect(r.Form.Get("HealthCheck.Interval")).Should(Equal("10"))
+					w.WriteHeader(http.StatusInternalServerError)
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/configure_health_check_not_found_load_balancer.xml")))
+				})
+			})
+
+			It("return error", func() {
+				ctx := context.Background()
+				expectedL4LoadBalancers := helper.NewTestL4LoadBalancer(testLoadBalancerName)
+				gotErr := testNifcloudAPIClient.ConfigureHealthCheck(ctx, &expectedL4LoadBalancers[0])
+				Expect(gotErr).Should(HaveOccurred())
+			})
+		})
+	})
 })

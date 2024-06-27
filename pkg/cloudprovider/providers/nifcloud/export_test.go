@@ -36,6 +36,7 @@ func NewNIFCLOUDAPIClientWithEndpoint(accessKeyID, secretAccessKey, region, endp
 }
 
 var ExportCreateLoadBalancer = (*ExportNifcloudAPIClient).createLoadBalancer
+var ExportRegisterPortWithLoadBalancer = (*ExportNifcloudAPIClient).registerPortWithLoadBalancer
 
 // nifcloud_instances.go
 

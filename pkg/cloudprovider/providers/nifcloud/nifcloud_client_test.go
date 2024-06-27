@@ -244,4 +244,74 @@ var _ = Describe("nifcloudAPIClient", func() {
 			Expect(gotDNSName).Should(BeEmpty())
 		})
 	})
+
+	var _ = Describe("registerPortWithLoadBalancer", func() {
+		Describe("creating port with l4 load balancer is success", func() {
+			testLoadBalancerName := "testl4lb"
+
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("LoadBalancerName")).Should(Equal(testLoadBalancerName))
+					Expect(r.Form.Get("Listeners.member.1.LoadBalancerPort")).Should(Equal("443"))
+					Expect(r.Form.Get("Listeners.member.1.InstancePort")).Should(Equal("30001"))
+					Expect(r.Form.Get("Listeners.member.1.BalancingType")).Should(Equal("1"))
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/register_port_with_load_balancer.xml")))
+				})
+			})
+
+			It("return the l4 load balancer", func() {
+				ctx := context.Background()
+				expectedL4LoadBalancers := helper.NewTestL4LoadBalancerWithTwoPort(testLoadBalancerName)
+				gotErr := nifcloud.ExportRegisterPortWithLoadBalancer(testNifcloudAPIClient, ctx, &expectedL4LoadBalancers[1])
+				Expect(gotErr).ShouldNot(HaveOccurred())
+			})
+		})
+
+		Describe("the specified port is already registered", func() {
+			testLoadBalancerName := "testl4lb"
+
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("LoadBalancerName")).Should(Equal(testLoadBalancerName))
+					Expect(r.Form.Get("Listeners.member.1.LoadBalancerPort")).Should(Equal("443"))
+					Expect(r.Form.Get("Listeners.member.1.InstancePort")).Should(Equal("30001"))
+					Expect(r.Form.Get("Listeners.member.1.BalancingType")).Should(Equal("1"))
+					w.WriteHeader(http.StatusInternalServerError)
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/register_prot_with_load_balancer_duplicate_port.xml")))
+				})
+			})
+
+			It("return error", func() {
+				ctx := context.Background()
+				expectedL4LoadBalancers := helper.NewTestL4LoadBalancerWithTwoPort(testLoadBalancerName)
+				gotErr := nifcloud.ExportRegisterPortWithLoadBalancer(testNifcloudAPIClient, ctx, &expectedL4LoadBalancers[1])
+				Expect(gotErr).Should(HaveOccurred())
+			})
+		})
+
+		Describe("the specified l4 load balancer is not existed", func() {
+			testLoadBalancerName := "testl4lb"
+
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("LoadBalancerName")).Should(Equal(testLoadBalancerName))
+					Expect(r.Form.Get("Listeners.member.1.LoadBalancerPort")).Should(Equal("443"))
+					Expect(r.Form.Get("Listeners.member.1.InstancePort")).Should(Equal("30001"))
+					Expect(r.Form.Get("Listeners.member.1.BalancingType")).Should(Equal("1"))
+					w.WriteHeader(http.StatusInternalServerError)
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/register_port_with_load_balancer_not_found_load_balancer.xml")))
+				})
+			})
+
+			It("return error", func() {
+				ctx := context.Background()
+				expectedL4LoadBalancers := helper.NewTestL4LoadBalancerWithTwoPort(testLoadBalancerName)
+				gotErr := nifcloud.ExportRegisterPortWithLoadBalancer(testNifcloudAPIClient, ctx, &expectedL4LoadBalancers[1])
+				Expect(gotErr).Should(HaveOccurred())
+			})
+		})
+	})
 })

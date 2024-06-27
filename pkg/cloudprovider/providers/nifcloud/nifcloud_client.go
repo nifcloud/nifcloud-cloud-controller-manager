@@ -217,7 +217,7 @@ func (c *nifcloudAPIClient) DescribeInstancesByInstanceID(ctx context.Context, i
 func (c *nifcloudAPIClient) DescribeInstancesByInstanceUniqueID(ctx context.Context, instanceUniqueIDs []string) ([]Instance, error) {
 	res, err := c.client.DescribeInstances(ctx, nil)
 	if err != nil {
-		if isAPIError(err, errorCodeInstanceNotFound) {
+		if IsAPIError(err, errorCodeInstanceNotFound) {
 			return nil, cloudprovider.InstanceNotFound
 		}
 		return nil, fmt.Errorf("failed to call DescribeInstances API: %w", err)

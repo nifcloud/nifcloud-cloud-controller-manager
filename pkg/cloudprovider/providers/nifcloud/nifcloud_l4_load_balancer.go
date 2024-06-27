@@ -24,7 +24,7 @@ func (c *Cloud) getL4LoadBalancer(ctx context.Context, clusterName string, servi
 	loadBalancers, err := c.client.DescribeLoadBalancers(ctx, loadBalancerName)
 	if err != nil {
 		switch {
-		case isAPIError(err, errorCodeLoadBalancerNotFound):
+		case IsAPIError(err, errorCodeLoadBalancerNotFound):
 			return nil, false, nil
 		}
 		return nil, false, err
@@ -45,7 +45,7 @@ func (c *Cloud) ensureL4LoadBalancer(ctx context.Context, loadBalancerName strin
 
 	current, err := c.client.DescribeLoadBalancers(ctx, loadBalancerName)
 	if err != nil {
-		if isAPIError(err, errorCodeLoadBalancerNotFound) {
+		if IsAPIError(err, errorCodeLoadBalancerNotFound) {
 			// create all load balancers
 			var vip string
 			for i, lb := range desire {
@@ -288,7 +288,7 @@ func (c *Cloud) ensureL4LoadBalancerDeleted(ctx context.Context, clusterName str
 	loadBalancers, err := c.client.DescribeLoadBalancers(ctx, loadBalancerName)
 	if err != nil {
 		switch {
-		case isAPIError(err, errorCodeLoadBalancerNotFound):
+		case IsAPIError(err, errorCodeLoadBalancerNotFound):
 			klog.Infof("load balancer %q is not found", loadBalancerName)
 			return nil
 		}

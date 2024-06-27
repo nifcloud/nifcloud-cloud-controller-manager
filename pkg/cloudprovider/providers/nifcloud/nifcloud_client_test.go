@@ -122,4 +122,82 @@ var _ = Describe("nifcloudAPIClient", func() {
 			})
 		})
 	})
+
+	var _ = Describe("DescribeLoadBalancers", func() {
+		Describe("given l4 load balancer is existed", func() {
+			testLoadBalancerName := "testl4lb"
+
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("LoadBalancerNames.member.1")).Should(Equal(testLoadBalancerName))
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/describe_load_balancers_load_balancer_name.xml")))
+				})
+			})
+
+			It("return the l4 load balancer", func() {
+				ctx := context.Background()
+				expectedL4LoadBalancers := helper.NewTestL4LoadBalancer(testLoadBalancerName)
+				expectedL4LoadBalancers[0].VIP = "203.0.113.5"
+				expectedL4LoadBalancers[0].BalancingTargets[0].InstanceType = ""
+				expectedL4LoadBalancers[0].BalancingTargets[0].PublicIPAddress = ""
+				expectedL4LoadBalancers[0].BalancingTargets[0].PrivateIPAddress = ""
+				expectedL4LoadBalancers[0].BalancingTargets[0].Zone = ""
+				expectedL4LoadBalancers[0].BalancingTargets[0].State = ""
+				gotL4LoadBalancer, gotErr := testNifcloudAPIClient.DescribeLoadBalancers(ctx, testLoadBalancerName)
+				Expect(gotErr).ShouldNot(HaveOccurred())
+				Expect(gotL4LoadBalancer).Should(Equal(expectedL4LoadBalancers))
+			})
+		})
+
+		Describe("given l4 load balancer is existed and it has two ports and filters", func() {
+			testLoadBalancerName := "testl4lb"
+
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("LoadBalancerNames.member.1")).Should(Equal(testLoadBalancerName))
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/describe_load_balancers_two_ports_and_filters.xml")))
+				})
+			})
+
+			It("return the l4 load balancer", func() {
+				ctx := context.Background()
+				expectedL4LoadBalancers := helper.NewTestL4LoadBalancerWithTwoPort(testLoadBalancerName)
+				for i := range expectedL4LoadBalancers {
+					expectedL4LoadBalancers[i].VIP = "203.0.113.5"
+					expectedL4LoadBalancers[i].BalancingTargets[0].InstanceType = ""
+					expectedL4LoadBalancers[i].BalancingTargets[0].PublicIPAddress = ""
+					expectedL4LoadBalancers[i].BalancingTargets[0].PrivateIPAddress = ""
+					expectedL4LoadBalancers[i].BalancingTargets[0].Zone = ""
+					expectedL4LoadBalancers[i].BalancingTargets[0].State = ""
+				}
+				expectedL4LoadBalancers[0].Filters = []string{"203.0.113.6", "203.0.113.7"}
+				gotL4LoadBalancer, gotErr := testNifcloudAPIClient.DescribeLoadBalancers(ctx, testLoadBalancerName)
+				Expect(gotErr).ShouldNot(HaveOccurred())
+				Expect(gotL4LoadBalancer).Should(Equal(expectedL4LoadBalancers))
+			})
+		})
+
+		Describe("given l4 load balancer is not existed", func() {
+			testLoadBalancerName := "testl4lb"
+
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("LoadBalancerNames.member.1")).Should(Equal(testLoadBalancerName))
+					w.WriteHeader(http.StatusInternalServerError)
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/describe_load_balancers_not_found_load_balancer.xml")))
+				})
+			})
+
+			It("return the l4 load balancer", func() {
+				ctx := context.Background()
+				gotL4LoadBalancer, gotErr := testNifcloudAPIClient.DescribeLoadBalancers(ctx, testLoadBalancerName)
+				Expect(gotErr).Should(HaveOccurred())
+				Expect(nifcloud.IsAPIError(gotErr, nifcloud.ExportErrorCodeLoadBalancerNotFound)).Should(BeTrue())
+				Expect(gotL4LoadBalancer).Should(BeNil())
+			})
+		})
+	})
 })

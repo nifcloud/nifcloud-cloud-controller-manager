@@ -21,7 +21,7 @@ var _ = Describe("nifcloudAPIClient", func() {
 		ctrl                  *gomock.Controller
 		ts                    *httptest.Server
 		handler               http.HandlerFunc
-		testNifcloudAPIClient nifcloud.CloudAPIClient
+		testNifcloudAPIClient *nifcloud.ExportNifcloudAPIClient
 	)
 
 	BeforeEach(func() {

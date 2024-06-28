@@ -1,0 +1,1 @@
+<Response><Errors><Error><Code>Client.Inoperable.LoadBalancer.HavingRegisteredInstance</Code><Message>The instance ID 'testinstance2' already exists with this LoadBalancer.</Message></Error></Errors><RequestID>85dcf32d-b2cb-4d82-9d6c-a60240e47148</RequestID></Response>

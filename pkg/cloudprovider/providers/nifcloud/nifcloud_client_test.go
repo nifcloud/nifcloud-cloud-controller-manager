@@ -470,4 +470,125 @@ var _ = Describe("nifcloudAPIClient", func() {
 			})
 		})
 	})
+
+	var _ = Describe("RegisterInstancesWithLoadBalancer", func() {
+		Describe("registering instances is success", func() {
+			testLoadBalancerName := "testl4lb"
+
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("LoadBalancerName")).Should(Equal(testLoadBalancerName))
+					Expect(r.Form.Get("Instances.member.1.InstanceId")).Should(Equal("testinstance2"))
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/register_instances_with_load_balancer.xml")))
+				})
+			})
+
+			It("return nil", func() {
+				ctx := context.Background()
+				expectedL4LoadBalancers := helper.NewTestL4LoadBalancer(testLoadBalancerName)
+				testInstances := []nifcloud.Instance{*helper.NewTestInstance()}
+				testInstances[0].InstanceID = "testinstance2"
+				testInstances[0].InstanceUniqueID = "i-efgh5678"
+				gotErr := testNifcloudAPIClient.RegisterInstancesWithLoadBalancer(ctx, &expectedL4LoadBalancers[0], testInstances)
+				Expect(gotErr).ShouldNot(HaveOccurred())
+			})
+		})
+
+		Describe("the specified l4 load balancer is not existed", func() {
+			testLoadBalancerName := "testl4lb"
+
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("LoadBalancerName")).Should(Equal(testLoadBalancerName))
+					Expect(r.Form.Get("Instances.member.1.InstanceId")).Should(Equal("testinstance2"))
+					w.WriteHeader(http.StatusInternalServerError)
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/register_instances_with_load_balancer_not_found_load_balancer.xml")))
+				})
+			})
+
+			It("return error", func() {
+				ctx := context.Background()
+				expectedL4LoadBalancers := helper.NewTestL4LoadBalancer(testLoadBalancerName)
+				testInstances := []nifcloud.Instance{*helper.NewTestInstance()}
+				testInstances[0].InstanceID = "testinstance2"
+				testInstances[0].InstanceUniqueID = "i-efgh5678"
+				gotErr := testNifcloudAPIClient.RegisterInstancesWithLoadBalancer(ctx, &expectedL4LoadBalancers[0], testInstances)
+				Expect(gotErr).Should(HaveOccurred())
+			})
+		})
+
+		Describe("the specified l4 load balancer does not have the port", func() {
+			testLoadBalancerName := "testl4lb"
+
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("LoadBalancerName")).Should(Equal(testLoadBalancerName))
+					Expect(r.Form.Get("Instances.member.1.InstanceId")).Should(Equal("testinstance2"))
+					w.WriteHeader(http.StatusInternalServerError)
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/register_instances_with_load_balancer_not_found_port.xml")))
+				})
+			})
+
+			It("return error", func() {
+				ctx := context.Background()
+				expectedL4LoadBalancers := helper.NewTestL4LoadBalancer(testLoadBalancerName)
+				testInstances := []nifcloud.Instance{*helper.NewTestInstance()}
+				testInstances[0].InstanceID = "testinstance2"
+				testInstances[0].InstanceUniqueID = "i-efgh5678"
+				gotErr := testNifcloudAPIClient.RegisterInstancesWithLoadBalancer(ctx, &expectedL4LoadBalancers[0], testInstances)
+				Expect(gotErr).Should(HaveOccurred())
+			})
+		})
+
+		Describe("the specified instance is not existed", func() {
+			testLoadBalancerName := "testl4lb"
+
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("LoadBalancerName")).Should(Equal(testLoadBalancerName))
+					Expect(r.Form.Get("Instances.member.1.InstanceId")).Should(Equal("testinstance2"))
+					w.WriteHeader(http.StatusInternalServerError)
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/register_instances_with_load_balancer_not_found_instances.xml")))
+				})
+			})
+
+			It("return error", func() {
+				ctx := context.Background()
+				expectedL4LoadBalancers := helper.NewTestL4LoadBalancer(testLoadBalancerName)
+				testInstances := []nifcloud.Instance{*helper.NewTestInstance()}
+				testInstances[0].InstanceID = "testinstance2"
+				testInstances[0].InstanceUniqueID = "i-efgh5678"
+				gotErr := testNifcloudAPIClient.RegisterInstancesWithLoadBalancer(ctx, &expectedL4LoadBalancers[0], testInstances)
+				Expect(gotErr).Should(HaveOccurred())
+			})
+		})
+
+		Describe("the specified instance is already registered", func() {
+			testLoadBalancerName := "testl4lb"
+
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("LoadBalancerName")).Should(Equal(testLoadBalancerName))
+					Expect(r.Form.Get("Instances.member.1.InstanceId")).Should(Equal("testinstance2"))
+					w.WriteHeader(http.StatusInternalServerError)
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/register_instances_with_load_balancer_duplicate.xml")))
+				})
+			})
+
+			It("return error", func() {
+				ctx := context.Background()
+				expectedL4LoadBalancers := helper.NewTestL4LoadBalancer(testLoadBalancerName)
+				testInstances := []nifcloud.Instance{*helper.NewTestInstance()}
+				testInstances[0].InstanceID = "testinstance2"
+				testInstances[0].InstanceUniqueID = "i-efgh5678"
+				gotErr := testNifcloudAPIClient.RegisterInstancesWithLoadBalancer(ctx, &expectedL4LoadBalancers[0], testInstances)
+				Expect(gotErr).Should(HaveOccurred())
+			})
+		})
+	})
 })

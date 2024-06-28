@@ -688,4 +688,71 @@ var _ = Describe("nifcloudAPIClient", func() {
 			})
 		})
 	})
+
+	var _ = Describe("DeleteLoadBalancer", func() {
+		Describe("deleting l4 load balancer is success", func() {
+			testLoadBalancerName := "testl4lb"
+
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("LoadBalancerName")).Should(Equal(testLoadBalancerName))
+					Expect(r.Form.Get("LoadBalancerPort")).Should(Equal("80"))
+					Expect(r.Form.Get("InstancePort")).Should(Equal("30000"))
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/delete_load_balancer.xml")))
+				})
+			})
+
+			It("return nil", func() {
+				ctx := context.Background()
+				expectedL4LoadBalancers := helper.NewTestL4LoadBalancer(testLoadBalancerName)
+				gotErr := testNifcloudAPIClient.DeleteLoadBalancer(ctx, &expectedL4LoadBalancers[0])
+				Expect(gotErr).ShouldNot(HaveOccurred())
+			})
+		})
+
+		Describe("the specified l4 load balancer is not existed", func() {
+			testLoadBalancerName := "testl4lb"
+
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("LoadBalancerName")).Should(Equal(testLoadBalancerName))
+					Expect(r.Form.Get("LoadBalancerPort")).Should(Equal("80"))
+					Expect(r.Form.Get("InstancePort")).Should(Equal("30000"))
+					w.WriteHeader(http.StatusInternalServerError)
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/delete_load_balancer_not_found_load_balancer.xml")))
+				})
+			})
+
+			It("return error", func() {
+				ctx := context.Background()
+				expectedL4LoadBalancers := helper.NewTestL4LoadBalancer(testLoadBalancerName)
+				gotErr := testNifcloudAPIClient.DeleteLoadBalancer(ctx, &expectedL4LoadBalancers[0])
+				Expect(gotErr).Should(HaveOccurred())
+			})
+		})
+
+		Describe("the specified l4 load balancer does not have the port", func() {
+			testLoadBalancerName := "testl4lb"
+
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("LoadBalancerName")).Should(Equal(testLoadBalancerName))
+					Expect(r.Form.Get("LoadBalancerPort")).Should(Equal("80"))
+					Expect(r.Form.Get("InstancePort")).Should(Equal("30000"))
+					w.WriteHeader(http.StatusInternalServerError)
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/delete_load_balancer_not_found_port.xml")))
+				})
+			})
+
+			It("return error", func() {
+				ctx := context.Background()
+				expectedL4LoadBalancers := helper.NewTestL4LoadBalancer(testLoadBalancerName)
+				gotErr := testNifcloudAPIClient.DeleteLoadBalancer(ctx, &expectedL4LoadBalancers[0])
+				Expect(gotErr).Should(HaveOccurred())
+			})
+		})
+	})
 })

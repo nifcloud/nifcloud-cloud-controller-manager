@@ -361,4 +361,113 @@ var _ = Describe("nifcloudAPIClient", func() {
 			})
 		})
 	})
+
+	var _ = Describe("SetFilterForLoadBalancer", func() {
+		Describe("setting filter is success", func() {
+			testLoadBalancerName := "testl4lb"
+
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("LoadBalancerName")).Should(Equal(testLoadBalancerName))
+					Expect(r.Form.Get("IPAddresses.member.1.IPAddress")).Should(Equal("203.0.113.5"))
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/set_filter_for_load_balancer.xml")))
+				})
+			})
+
+			It("return nil", func() {
+				ctx := context.Background()
+				expectedL4LoadBalancers := helper.NewTestL4LoadBalancer(testLoadBalancerName)
+				testFilters := []nifcloud.Filter{
+					{
+						AddOnFilter: true,
+						IPAddress:   "203.0.113.5",
+					},
+				}
+				gotErr := testNifcloudAPIClient.SetFilterForLoadBalancer(ctx, &expectedL4LoadBalancers[0], testFilters)
+				Expect(gotErr).ShouldNot(HaveOccurred())
+			})
+		})
+
+		Describe("the specified l4 load balancer is not existed", func() {
+			testLoadBalancerName := "testl4lb"
+
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("LoadBalancerName")).Should(Equal(testLoadBalancerName))
+					Expect(r.Form.Get("IPAddresses.member.1.IPAddress")).Should(Equal("203.0.113.5"))
+					w.WriteHeader(http.StatusInternalServerError)
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/set_filter_for_load_balancer_not_found_load_balancer.xml")))
+				})
+			})
+
+			It("return error", func() {
+				ctx := context.Background()
+				expectedL4LoadBalancers := helper.NewTestL4LoadBalancer(testLoadBalancerName)
+				testFilters := []nifcloud.Filter{
+					{
+						AddOnFilter: true,
+						IPAddress:   "203.0.113.5",
+					},
+				}
+				gotErr := testNifcloudAPIClient.SetFilterForLoadBalancer(ctx, &expectedL4LoadBalancers[0], testFilters)
+				Expect(gotErr).Should(HaveOccurred())
+			})
+		})
+
+		Describe("the specified l4 load balancer does not have the port", func() {
+			testLoadBalancerName := "testl4lb"
+
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("LoadBalancerName")).Should(Equal(testLoadBalancerName))
+					Expect(r.Form.Get("IPAddresses.member.1.IPAddress")).Should(Equal("203.0.113.5"))
+					w.WriteHeader(http.StatusInternalServerError)
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/set_filter_for_load_balancer_not_found_port.xml")))
+				})
+			})
+
+			It("return error", func() {
+				ctx := context.Background()
+				expectedL4LoadBalancers := helper.NewTestL4LoadBalancer(testLoadBalancerName)
+				testFilters := []nifcloud.Filter{
+					{
+						AddOnFilter: true,
+						IPAddress:   "203.0.113.5",
+					},
+				}
+				gotErr := testNifcloudAPIClient.SetFilterForLoadBalancer(ctx, &expectedL4LoadBalancers[0], testFilters)
+				Expect(gotErr).Should(HaveOccurred())
+			})
+		})
+
+		Describe("the specified l4 load balancer has already the filter", func() {
+			testLoadBalancerName := "testl4lb"
+
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("LoadBalancerName")).Should(Equal(testLoadBalancerName))
+					Expect(r.Form.Get("IPAddresses.member.1.IPAddress")).Should(Equal("203.0.113.5"))
+					w.WriteHeader(http.StatusInternalServerError)
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/set_filter_for_load_balancer_duplicate_ip_address.xml")))
+				})
+			})
+
+			It("return error", func() {
+				ctx := context.Background()
+				expectedL4LoadBalancers := helper.NewTestL4LoadBalancer(testLoadBalancerName)
+				testFilters := []nifcloud.Filter{
+					{
+						AddOnFilter: true,
+						IPAddress:   "203.0.113.5",
+					},
+				}
+				gotErr := testNifcloudAPIClient.SetFilterForLoadBalancer(ctx, &expectedL4LoadBalancers[0], testFilters)
+				Expect(gotErr).Should(HaveOccurred())
+			})
+		})
+	})
 })

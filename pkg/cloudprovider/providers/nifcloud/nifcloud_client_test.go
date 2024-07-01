@@ -222,26 +222,26 @@ var _ = Describe("nifcloudAPIClient", func() {
 				Expect(gotDNSName).Should(Equal(expectDNSName))
 			})
 		})
-	})
 
-	Describe("the specified l4 load balancer is already existed", func() {
-		testLoadBalancerName := "testl4lb"
+		Describe("the specified l4 load balancer is already existed", func() {
+			testLoadBalancerName := "testl4lb"
 
-		BeforeEach(func() {
-			handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				lo.Must0(r.ParseForm())
-				Expect(r.Form.Get("LoadBalancerName")).Should(Equal(testLoadBalancerName))
-				w.WriteHeader(http.StatusInternalServerError)
-				_, _ = w.Write(lo.Must(os.ReadFile("./testdata/create_load_balancer_duplicate_load_balancer.xml")))
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("LoadBalancerName")).Should(Equal(testLoadBalancerName))
+					w.WriteHeader(http.StatusInternalServerError)
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/create_load_balancer_duplicate_load_balancer.xml")))
+				})
 			})
-		})
 
-		It("return error", func() {
-			ctx := context.Background()
-			testLoadBalancers := helper.NewTestL4LoadBalancer(testLoadBalancerName)
-			gotDNSName, gotErr := nifcloud.ExportCreateLoadBalancer(testNifcloudAPIClient, ctx, &testLoadBalancers[0])
-			Expect(gotErr).Should(HaveOccurred())
-			Expect(gotDNSName).Should(BeEmpty())
+			It("return error", func() {
+				ctx := context.Background()
+				testLoadBalancers := helper.NewTestL4LoadBalancer(testLoadBalancerName)
+				gotDNSName, gotErr := nifcloud.ExportCreateLoadBalancer(testNifcloudAPIClient, ctx, &testLoadBalancers[0])
+				Expect(gotErr).Should(HaveOccurred())
+				Expect(gotDNSName).Should(BeEmpty())
+			})
 		})
 	})
 

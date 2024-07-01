@@ -32,7 +32,7 @@ func (c *Cloud) getElasticLoadBalancer(ctx context.Context, clusterName string, 
 	loadBalancers, err := c.client.DescribeElasticLoadBalancers(ctx, loadBalancerName)
 	if err != nil {
 		switch {
-		case isAPIError(err, errorCodeElasticLoadBalancerNotFound):
+		case IsAPIError(err, errorCodeElasticLoadBalancerNotFound):
 			return nil, false, nil
 		}
 		return nil, false, err
@@ -57,7 +57,7 @@ func (c *Cloud) ensureElasticLoadBalancer(ctx context.Context, loadBalancerName 
 
 	// if not exist, create load balancer
 	if err != nil {
-		if isAPIError(err, errorCodeElasticLoadBalancerNotFound) {
+		if IsAPIError(err, errorCodeElasticLoadBalancerNotFound) {
 			// create all load balancers
 			var vip string
 			var networkInterfaces []NetworkInterface
@@ -408,7 +408,7 @@ func (c *Cloud) allowSecurityGroupRulesFromElasticLoadBalancer(ctx context.Conte
 		for _, securityGroupRule := range securityGroupRules {
 			err = c.client.AuthorizeSecurityGroupIngress(ctx, securityGroup.GroupName, &securityGroupRule)
 			if err != nil {
-				if isAPIError(err, errorCodeSecurityGroupDuplicate) {
+				if IsAPIError(err, errorCodeSecurityGroupDuplicate) {
 					// ignore error
 				} else {
 					return err
@@ -444,7 +444,7 @@ func (c *Cloud) denySecurityGroupRulesFromElasticLoadBalancer(ctx context.Contex
 		for _, securityGroupRule := range securityGroupRules {
 			err = c.client.RevokeSecurityGroupIngress(ctx, securityGroup.GroupName, &securityGroupRule)
 			if err != nil {
-				if isAPIError(err, errorCodeSecurityGroupIngressNotFound) {
+				if IsAPIError(err, errorCodeSecurityGroupIngressNotFound) {
 					// ignore error
 				} else {
 					return err
@@ -608,7 +608,7 @@ func (c *Cloud) ensureElasticLoadBalancerDeleted(ctx context.Context, clusterNam
 	loadBalancers, err := c.client.DescribeElasticLoadBalancers(ctx, loadBalancerName)
 	if err != nil {
 		switch {
-		case isAPIError(err, errorCodeElasticLoadBalancerNotFound):
+		case IsAPIError(err, errorCodeElasticLoadBalancerNotFound):
 			klog.Infof("Load balancer %q is not found", loadBalancerName)
 			return nil
 		}

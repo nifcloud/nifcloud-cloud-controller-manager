@@ -18,7 +18,9 @@ func (c *Cloud) SetRegion(region string) {
 
 // nifcloud_client.go
 
-func NewNIFCLOUDAPIClientWithEndpoint(accessKeyID, secretAccessKey, region, endpoint string) CloudAPIClient {
+type ExportNifcloudAPIClient = nifcloudAPIClient
+
+func NewNIFCLOUDAPIClientWithEndpoint(accessKeyID, secretAccessKey, region, endpoint string) *ExportNifcloudAPIClient {
 	cfg := nifcloud.NewConfig(accessKeyID, secretAccessKey, region)
 	cfg.EndpointResolverWithOptions = aws.EndpointResolverWithOptionsFunc(
 		func(_, region string, _ ...interface{}) (aws.Endpoint, error) {
@@ -28,10 +30,13 @@ func NewNIFCLOUDAPIClientWithEndpoint(accessKeyID, secretAccessKey, region, endp
 			}, nil
 		},
 	)
-	return &nifcloudAPIClient{
+	return &ExportNifcloudAPIClient{
 		client: computing.NewFromConfig(cfg),
 	}
 }
+
+var ExportCreateLoadBalancer = (*ExportNifcloudAPIClient).createLoadBalancer
+var ExportRegisterPortWithLoadBalancer = (*ExportNifcloudAPIClient).registerPortWithLoadBalancer
 
 // nifcloud_instances.go
 

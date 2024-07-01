@@ -21,7 +21,7 @@ const (
 	errorCodeSecurityGroupDuplicate       = "Client.InvalidParameterDuplicate.SecurityGroup"
 )
 
-func isAPIError(err error, code string) bool {
+func IsAPIError(err error, code string) bool {
 	var awsErr smithy.APIError
 	if goerrors.As(err, &awsErr) {
 		return awsErr.ErrorCode() == code

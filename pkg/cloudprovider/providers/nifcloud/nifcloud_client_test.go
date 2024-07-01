@@ -443,7 +443,7 @@ var _ = Describe("nifcloudAPIClient", func() {
 			})
 		})
 
-		Describe("the specified l4 load balancer has already the filter", func() {
+		Describe("the specified l4 load balancer already has the filter", func() {
 			testLoadBalancerName := "testl4lb"
 
 			BeforeEach(func() {

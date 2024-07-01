@@ -1,1 +1,1 @@
-<Response><Errors><Error><Code>Client.InvalidParameterNotFound.LoadBalancer</Code><Message>The LoadBalancerName 'nol4lb' does not exist.</Message></Error></Errors><RequestID>2763b60e-c44e-4130-8e08-b416ac9d42ea</RequestID></Response>
+<Response><Errors><Error><Code>Client.InvalidParameterNotFound.LoadBalancer</Code><Message>The LoadBalancerName 'testl4lb' does not exist.</Message></Error></Errors><RequestID>2763b60e-c44e-4130-8e08-b416ac9d42ea</RequestID></Response>

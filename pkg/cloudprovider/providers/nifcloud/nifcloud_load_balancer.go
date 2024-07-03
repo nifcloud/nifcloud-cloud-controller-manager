@@ -23,61 +23,71 @@ const (
 	// default network interface
 	elasticLoadBalancerDefaultNetworkInterface = commonGlobalNetworkID
 
-	// ServiceAnnotationLoadBalancerNetworkVolume is the annotation that specify network volume for load balancer
-	// valid volume is 10, 20, ..., 2000
-	// See https://pfs.nifcloud.com/api/rest/CreateLoadBalancer.htm
-	ServiceAnnotationLoadBalancerNetworkVolume = "service.beta.kubernetes.io/nifcloud-load-balancer-network-volume"
-
-	// ServiceAnnotationLoadBalancerAccountingType is the annotation that specify accounting type for load balancer
-	// 1: monthly, 2: pay-per-use
-	// See https://pfs.nifcloud.com/api/rest/CreateLoadBalancer.htm
-	ServiceAnnotationLoadBalancerAccountingType = "service.beta.kubernetes.io/nifcloud-load-balancer-accounting-type"
-
-	// ServiceAnnotationLoadBalancerPolicyType is the annotation that specify policy type for load balancer
-	// valid values are 'standard' or 'ats'
-	// See https://pfs.nifcloud.com/api/rest/CreateLoadBalancer.htm
-	ServiceAnnotationLoadBalancerPolicyType = "service.beta.kubernetes.io/nifcloud-load-balancer-policy-type"
-
-	// ServiceAnnotationLoadBalancerBalancingType is the annotation that specify balancing type for load balancer
-	// 1: Round-Robin, 2: Least-Connection
-	// See https://pfs.nifcloud.com/api/rest/CreateLoadBalancer.htm
-	ServiceAnnotationLoadBalancerBalancingType = "service.beta.kubernetes.io/nifcloud-load-balancer-balancing-type"
-
-	// ServiceAnnotationLoadBalancerHCProtocol is the annotation that specify health check protocol for load balancer
-	// valid values are 'TCP' or 'ICMP'
-	// See https://pfs.nifcloud.com/api/rest/ConfigureHealthCheck.htm
-	ServiceAnnotationLoadBalancerHCProtocol = "service.beta.kubernetes.io/nifcloud-load-balancer-healthcheck-protocol"
-
-	// ServiceAnnotationLoadBalancerHCUnhealthyThreshold is the annotation that specify the number of unsuccessful
-	// health checks count required for a backend to be considered unhealthy for traffic
-	// See https://pfs.nifcloud.com/api/rest/ConfigureHealthCheck.htm
-	ServiceAnnotationLoadBalancerHCUnhealthyThreshold = "service.beta.kubernetes.io/nifcloud-load-balancer-healthcheck-unhealthy-threshold"
-
-	// ServiceAnnotationLoadBalancerHCInterval is the annotation that specify interval seconds for health check
-	// See https://pfs.nifcloud.com/api/rest/ConfigureHealthCheck.htm
-	ServiceAnnotationLoadBalancerHCInterval = "service.beta.kubernetes.io/nifcloud-load-balancer-healthcheck-interval"
-
 	// ServiceAnnotationLoadBalancerType is the annotation that specify using load balancer type
 	// valid values are 'lb'(default) or 'elb'
 	ServiceAnnotationLoadBalancerType = "service.beta.kubernetes.io/nifcloud-load-balancer-type"
 
+	// ServiceAnnotationLoadBalancerNetworkVolume is the annotation that specify network volume for load balancer
+	// valid volume is 10, 20, ..., 2000
+	// See https://docs.nifcloud.com/cp/api/CreateLoadBalancer.htm for l4 load balancer
+	// See https://docs.nifcloud.com/cp/api/NiftyCreateElasticLoadBalancer.htm for elastic load balancer
+	ServiceAnnotationLoadBalancerNetworkVolume = "service.beta.kubernetes.io/nifcloud-load-balancer-network-volume"
+
+	// ServiceAnnotationLoadBalancerAccountingType is the annotation that specify accounting type for load balancer
+	// 1: monthly, 2: pay-per-use
+	// See https://docs.nifcloud.com/cp/api/CreateLoadBalancer.htm for l4 load balancer
+	// See https://docs.nifcloud.com/cp/api/NiftyCreateElasticLoadBalancer.htm for elastic load balancer
+	ServiceAnnotationLoadBalancerAccountingType = "service.beta.kubernetes.io/nifcloud-load-balancer-accounting-type"
+
+	// ServiceAnnotationLoadBalancerPolicyType is the annotation that specify policy type for load balancer
+	// valid values are 'standard' or 'ats'
+	// See https://docs.nifcloud.com/cp/api/CreateLoadBalancer.htm
+	ServiceAnnotationLoadBalancerPolicyType = "service.beta.kubernetes.io/nifcloud-load-balancer-policy-type"
+
+	// ServiceAnnotationLoadBalancerBalancingType is the annotation that specify balancing type for load balancer
+	// 1: Round-Robin, 2: Least-Connection
+	// See https://docs.nifcloud.com/cp/api/CreateLoadBalancer.htm for l4 load balancer
+	// See https://docs.nifcloud.com/cp/api/NiftyCreateElasticLoadBalancer.htm for elastic load balancer
+	ServiceAnnotationLoadBalancerBalancingType = "service.beta.kubernetes.io/nifcloud-load-balancer-balancing-type"
+
+	// ServiceAnnotationLoadBalancerHCProtocol is the annotation that specify health check protocol for load balancer
+	// valid values are 'TCP' or 'ICMP'
+	// See https://docs.nifcloud.com/cp/api/ConfigureHealthCheck.htm for l4 load balancer
+	// See https://docs.nifcloud.com/cp/api/NiftyConfigureElasticLoadBalancerHealthCheck.htm for elastic load balancer
+	ServiceAnnotationLoadBalancerHCProtocol = "service.beta.kubernetes.io/nifcloud-load-balancer-healthcheck-protocol"
+
+	// ServiceAnnotationLoadBalancerHCUnhealthyThreshold is the annotation that specify the number of unsuccessful
+	// health checks count required for a backend to be considered unhealthy for traffic
+	// See https://docs.nifcloud.com/cp/api/ConfigureHealthCheck.htm for l4 load balancer
+	// See https://docs.nifcloud.com/cp/api/NiftyConfigureElasticLoadBalancerHealthCheck.htm for elastic load balancer
+	ServiceAnnotationLoadBalancerHCUnhealthyThreshold = "service.beta.kubernetes.io/nifcloud-load-balancer-healthcheck-unhealthy-threshold"
+
+	// ServiceAnnotationLoadBalancerHCInterval is the annotation that specify interval seconds for health check
+	// See https://docs.nifcloud.com/cp/api/ConfigureHealthCheck.htm for l4 load balancer
+	// See https://docs.nifcloud.com/cp/api/NiftyConfigureElasticLoadBalancerHealthCheck.htm for elastic load balancer
+	ServiceAnnotationLoadBalancerHCInterval = "service.beta.kubernetes.io/nifcloud-load-balancer-healthcheck-interval"
+
 	// ServiceAnnotationLoadBalancerNetworkInterface(1-2) is the annotation that specify network interface of elastic load balancer
 	// net-COMMON_GLOBAL, net-COMMON_PRIVATE or network ID of private LAN
+	// See https://docs.nifcloud.com/cp/api/NiftyCreateElasticLoadBalancer.htm
 	ServiceAnnotationLoadBalancerNetworkInterface1 = "service.beta.kubernetes.io/nifcloud-load-balancer-network-interface-1-network-id"
 	ServiceAnnotationLoadBalancerNetworkInterface2 = "service.beta.kubernetes.io/nifcloud-load-balancer-network-interface-2-network-id"
 
 	// ServiceAnnotationLoadBalancerNetworkInterface(1-2)IPAddress is the annotation that specify IPAdress of elastic load balancer
 	// Set IP address only when corresponding network interface is private
+	// See https://docs.nifcloud.com/cp/api/NiftyCreateElasticLoadBalancer.htm
 	ServiceAnnotationLoadBalancerNetworkInterface1IPAddress = "service.beta.kubernetes.io/nifcloud-load-balancer-network-interface-1-ip-address"
 	ServiceAnnotationLoadBalancerNetworkInterface2IPAddress = "service.beta.kubernetes.io/nifcloud-load-balancer-network-interface-2-ip-address"
 
 	// ServiceAnnotationLoadBalancerNetworkInterface(1-2)SystemIPAddresses is the annotation that specify SystemIPAdresses of elastic load balancer
 	// Set system IP address only when corresponding network interface is private
+	// See https://docs.nifcloud.com/cp/api/NiftyCreateElasticLoadBalancer.htm
 	ServiceAnnotationLoadBalancerNetworkInterface1SystemIPAddresses = "service.beta.kubernetes.io/nifcloud-load-balancer-network-interface-1-system-ip-addresses"
 	ServiceAnnotationLoadBalancerNetworkInterface2SystemIPAddresses = "service.beta.kubernetes.io/nifcloud-load-balancer-network-interface-2-system-ip-addresses"
 
 	// ServiceAnnotationLoadBalancerVipNetwork is the annotation that specify VIP network
 	// valid values are '1' or '2'
+	// See https://docs.nifcloud.com/cp/api/NiftyCreateElasticLoadBalancer.htm
 	ServiceAnnotationLoadBalancerVipNetwork = "service.beta.kubernetes.io/nifcloud-load-balancer-vip-network"
 )
 

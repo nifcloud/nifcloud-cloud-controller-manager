@@ -982,4 +982,51 @@ var _ = Describe("nifcloudAPIClient", func() {
 			})
 		})
 	})
+
+	var _ = Describe("ConfigureElasticLoadBalancerHealthCheck", func() {
+		Describe("configuring elastic load balancer health check is success", func() {
+			testLoadBalancerName := "testelb"
+
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("ElasticLoadBalancerName")).Should(Equal(testLoadBalancerName))
+					Expect(r.Form.Get("HealthCheck.Target")).Should(Equal("TCP:30000"))
+					Expect(r.Form.Get("HealthCheck.Interval")).Should(Equal("10"))
+					Expect(r.Form.Get("HealthCheck.UnhealthyThreshold")).Should(Equal("1"))
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/configure_elastic_load_balancer_health_check.xml")))
+				})
+			})
+
+			It("return nil", func() {
+				ctx := context.Background()
+				testElasticLoadBalancers := helper.NewTestElasticLoadBalancer(testLoadBalancerName)
+				gotErr := testNifcloudAPIClient.ConfigureElasticLoadBalancerHealthCheck(ctx, &testElasticLoadBalancers[0])
+				Expect(gotErr).ShouldNot(HaveOccurred())
+			})
+		})
+
+		Describe("the specified elastic load balancer is not existed", func() {
+			testLoadBalancerName := "testelb"
+
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("ElasticLoadBalancerName")).Should(Equal(testLoadBalancerName))
+					Expect(r.Form.Get("HealthCheck.Target")).Should(Equal("TCP:30000"))
+					Expect(r.Form.Get("HealthCheck.Interval")).Should(Equal("10"))
+					Expect(r.Form.Get("HealthCheck.UnhealthyThreshold")).Should(Equal("1"))
+					w.WriteHeader(http.StatusInternalServerError)
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/configure_elastic_load_balancer_health_check_not_found_load_balancer.xml")))
+				})
+			})
+
+			It("return error", func() {
+				ctx := context.Background()
+				testElasticLoadBalancers := helper.NewTestElasticLoadBalancer(testLoadBalancerName)
+				gotErr := testNifcloudAPIClient.ConfigureElasticLoadBalancerHealthCheck(ctx, &testElasticLoadBalancers[0])
+				Expect(gotErr).Should(HaveOccurred())
+			})
+		})
+	})
 })

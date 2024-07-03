@@ -1,0 +1,1 @@
+<Response><Errors><Error><Code>Client.InvalidParameterNotFound.ElasticLoadBalancer</Code><Message>The ElasticLoadBalancers_ElasticLoadBalancerName 'testelb' does not exist.</Message></Error></Errors><RequestID>b146ce3c-95bc-47d0-9d3d-3b61ad5a40e3</RequestID></Response>

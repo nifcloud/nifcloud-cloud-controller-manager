@@ -755,4 +755,100 @@ var _ = Describe("nifcloudAPIClient", func() {
 			})
 		})
 	})
+
+	var _ = Describe("DescribeElasticLoadBalancers", func() {
+		Describe("given elastic load balancer is existed", func() {
+			testLoadBalancerName := "testelb"
+
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("ElasticLoadBalancers.ElasticLoadBalancerName.1")).Should(Equal(testLoadBalancerName))
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/describe_elastic_load_balancers.xml")))
+				})
+			})
+
+			It("return the elastic load balancer", func() {
+				ctx := context.Background()
+				expectedElasticLoadBalancers := helper.NewTestElasticLoadBalancer(testLoadBalancerName)
+				expectedElasticLoadBalancers[0].VIP = "203.0.113.5"
+				expectedElasticLoadBalancers[0].BalancingTargets[0].InstanceType = ""
+				expectedElasticLoadBalancers[0].BalancingTargets[0].PublicIPAddress = ""
+				expectedElasticLoadBalancers[0].BalancingTargets[0].PrivateIPAddress = ""
+				expectedElasticLoadBalancers[0].BalancingTargets[0].Zone = ""
+				expectedElasticLoadBalancers[0].BalancingTargets[0].State = ""
+				expectedElasticLoadBalancers[0].NetworkInterfaces[0].IPAddress = "203.0.113.5"
+				expectedElasticLoadBalancers[0].NetworkInterfaces[0].SystemIpAddresses = []string{"203.0.113.6", "203.0.113.7"}
+				gotElasticLoadBalancer, gotErr := testNifcloudAPIClient.DescribeElasticLoadBalancers(ctx, testLoadBalancerName)
+				Expect(gotErr).ShouldNot(HaveOccurred())
+				Expect(gotElasticLoadBalancer).Should(Equal(expectedElasticLoadBalancers))
+			})
+		})
+
+		Describe("given elastic load balancer is existed and it has two ports and network interfaces", func() {
+			testLoadBalancerName := "testelb"
+
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("ElasticLoadBalancers.ElasticLoadBalancerName.1")).Should(Equal(testLoadBalancerName))
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/describe_elastic_load_balancers_two_port_and_network_interfaces.xml")))
+				})
+			})
+
+			It("return the elastic load balancer", func() {
+				ctx := context.Background()
+				networkInterfaces := []nifcloud.NetworkInterface{
+					{
+						NetworkId:         "net-xxxx1111",
+						NetworkName:       "testlan",
+						IPAddress:         "172.16.0.1",
+						SystemIpAddresses: []string{"172.16.0.2", "172.16.0.3"},
+						IsVipNetwork:      false,
+					},
+					{
+						NetworkId:         "net-COMMON_GLOBAL",
+						NetworkName:       "",
+						IPAddress:         "203.0.113.5",
+						SystemIpAddresses: []string{"203.0.113.6", "203.0.113.7"},
+						IsVipNetwork:      true,
+					},
+				}
+				expectedElasticLoadBalancers := helper.NewTestElasticLoadBalancerWithTwoPort(testLoadBalancerName)
+				for i := range expectedElasticLoadBalancers {
+					expectedElasticLoadBalancers[i].VIP = "203.0.113.5"
+					expectedElasticLoadBalancers[i].BalancingTargets[0].InstanceType = ""
+					expectedElasticLoadBalancers[i].BalancingTargets[0].PublicIPAddress = ""
+					expectedElasticLoadBalancers[i].BalancingTargets[0].PrivateIPAddress = ""
+					expectedElasticLoadBalancers[i].BalancingTargets[0].Zone = ""
+					expectedElasticLoadBalancers[i].BalancingTargets[0].State = ""
+					expectedElasticLoadBalancers[i].NetworkInterfaces = networkInterfaces
+				}
+				gotElasticLoadBalancer, gotErr := testNifcloudAPIClient.DescribeElasticLoadBalancers(ctx, testLoadBalancerName)
+				Expect(gotErr).ShouldNot(HaveOccurred())
+				Expect(gotElasticLoadBalancer).Should(Equal(expectedElasticLoadBalancers))
+			})
+		})
+
+		Describe("given elastic load balancer is not existed", func() {
+			testLoadBalancerName := "testelb"
+
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("ElasticLoadBalancers.ElasticLoadBalancerName.1")).Should(Equal(testLoadBalancerName))
+					w.WriteHeader(http.StatusInternalServerError)
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/describe_elastic_load_balancers_not_found_load_balancer.xml")))
+				})
+			})
+
+			It("return error", func() {
+				ctx := context.Background()
+				gotElasticLoadBalancer, gotErr := testNifcloudAPIClient.DescribeElasticLoadBalancers(ctx, testLoadBalancerName)
+				Expect(gotErr).Should(HaveOccurred())
+				Expect(nifcloud.IsAPIError(gotErr, nifcloud.ExportErrorCodeElasticLoadBalancerNotFound)).Should(BeTrue())
+				Expect(gotElasticLoadBalancer).Should(BeNil())
+			})
+		})
+	})
 })

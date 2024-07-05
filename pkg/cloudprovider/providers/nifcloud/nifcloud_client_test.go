@@ -1192,4 +1192,97 @@ var _ = Describe("nifcloudAPIClient", func() {
 			})
 		})
 	})
+
+	var _ = Describe("DeregisterInstancesFromElasticLoadBalancer", func() {
+		Describe("deregistering instances is success", func() {
+			testLoadBalancerName := "testelb"
+
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("ElasticLoadBalancerName")).Should(Equal(testLoadBalancerName))
+					Expect(r.Form.Get("Instances.member.1.InstanceId")).Should(Equal("testinstance"))
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/deregister_instances_from_elastic_load_balancer.xml")))
+				})
+			})
+
+			It("return nil", func() {
+				ctx := context.Background()
+				testElasticLoadBalancers := helper.NewTestElasticLoadBalancer(testLoadBalancerName)
+				testInstances := []nifcloud.Instance{*helper.NewTestInstance()}
+				testInstances[0].InstanceID = "testinstance"
+				gotErr := testNifcloudAPIClient.DeregisterInstancesFromElasticLoadBalancer(ctx, &testElasticLoadBalancers[0], testInstances)
+				Expect(gotErr).ShouldNot(HaveOccurred())
+			})
+		})
+
+		Describe("the specified elastic load balancer is not existed", func() {
+			testLoadBalancerName := "testelb"
+
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("ElasticLoadBalancerName")).Should(Equal(testLoadBalancerName))
+					Expect(r.Form.Get("Instances.member.1.InstanceId")).Should(Equal("testinstance"))
+					w.WriteHeader(http.StatusInternalServerError)
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/deregister_instances_from_elastic_load_balancer_not_found_load_balancer.xml")))
+				})
+			})
+
+			It("return error", func() {
+				ctx := context.Background()
+				testElasticLoadBalancers := helper.NewTestElasticLoadBalancer(testLoadBalancerName)
+				testInstances := []nifcloud.Instance{*helper.NewTestInstance()}
+				testInstances[0].InstanceID = "testinstance"
+				gotErr := testNifcloudAPIClient.RegisterInstancesWithElasticLoadBalancer(ctx, &testElasticLoadBalancers[0], testInstances)
+				Expect(gotErr).Should(HaveOccurred())
+			})
+		})
+
+		Describe("the specified elastic load balancer does not have the port", func() {
+			testLoadBalancerName := "testelb"
+
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("ElasticLoadBalancerName")).Should(Equal(testLoadBalancerName))
+					Expect(r.Form.Get("Instances.member.1.InstanceId")).Should(Equal("testinstance"))
+					w.WriteHeader(http.StatusInternalServerError)
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/deregister_instances_from_elastic_load_balancer_not_found_port.xml")))
+				})
+			})
+
+			It("return error", func() {
+				ctx := context.Background()
+				testElasticLoadBalancers := helper.NewTestElasticLoadBalancer(testLoadBalancerName)
+				testInstances := []nifcloud.Instance{*helper.NewTestInstance()}
+				testInstances[0].InstanceID = "testinstance"
+				gotErr := testNifcloudAPIClient.DeregisterInstancesFromElasticLoadBalancer(ctx, &testElasticLoadBalancers[0], testInstances)
+				Expect(gotErr).Should(HaveOccurred())
+			})
+		})
+
+		Describe("the specified instance is not existed", func() {
+			testLoadBalancerName := "testelb"
+
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("ElasticLoadBalancerName")).Should(Equal(testLoadBalancerName))
+					Expect(r.Form.Get("Instances.member.1.InstanceId")).Should(Equal("testinstance"))
+					w.WriteHeader(http.StatusInternalServerError)
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/deregister_instances_from_elastic_load_balancer_not_found_instances.xml")))
+				})
+			})
+
+			It("return error", func() {
+				ctx := context.Background()
+				testElasticLoadBalancers := helper.NewTestElasticLoadBalancer(testLoadBalancerName)
+				testInstances := []nifcloud.Instance{*helper.NewTestInstance()}
+				testInstances[0].InstanceID = "testinstance"
+				gotErr := testNifcloudAPIClient.DeregisterInstancesFromElasticLoadBalancer(ctx, &testElasticLoadBalancers[0], testInstances)
+				Expect(gotErr).Should(HaveOccurred())
+			})
+		})
+	})
 })

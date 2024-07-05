@@ -569,6 +569,7 @@ func (c *nifcloudAPIClient) DescribeElasticLoadBalancers(ctx context.Context, na
 			elb := ElasticLoadBalancer{
 				Name:                          nifcloud.ToString(elbDesc.ElasticLoadBalancerName),
 				VIP:                           nifcloud.ToString(elbDesc.DNSName),
+				AvailabilityZone:              elbDesc.AvailabilityZones[0],
 				AccountingType:                nifcloud.ToString(elbDesc.AccountingType),
 				Protocol:                      nifcloud.ToString(listener.Listener.Protocol),
 				BalancingType:                 nifcloud.ToInt32(listener.Listener.BalancingType),

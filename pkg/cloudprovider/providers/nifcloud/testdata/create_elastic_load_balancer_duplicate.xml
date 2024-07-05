@@ -1,0 +1,1 @@
+<Response><Errors><Error><Code>Client.InvalidParameterDuplicate.ElasticLoadBalancer</Code><Message>The ElasticLoadBalancerName 'testelb' already exists.</Message></Error></Errors><RequestID>2ec3c814-a7a5-46ea-8f5f-e59a500ec320</RequestID></Response>

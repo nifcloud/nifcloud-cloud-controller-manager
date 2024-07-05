@@ -1029,4 +1029,51 @@ var _ = Describe("nifcloudAPIClient", func() {
 			})
 		})
 	})
+
+	var _ = Describe("DeleteElasticLoadBalancer", func() {
+		Describe("deleting elastic load balancer is success", func() {
+			testLoadBalancerName := "testelb"
+
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("ElasticLoadBalancerName")).Should(Equal(testLoadBalancerName))
+					Expect(r.Form.Get("ElasticLoadBalancerPort")).Should(Equal("80"))
+					Expect(r.Form.Get("InstancePort")).Should(Equal("30000"))
+					Expect(r.Form.Get("Protocol")).Should(Equal("TCP"))
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/delete_elastic_load_balancer.xml")))
+				})
+			})
+
+			It("return nil", func() {
+				ctx := context.Background()
+				testElasticLoadBalancers := helper.NewTestElasticLoadBalancer(testLoadBalancerName)
+				gotErr := testNifcloudAPIClient.DeleteElasticLoadBalancer(ctx, &testElasticLoadBalancers[0])
+				Expect(gotErr).ShouldNot(HaveOccurred())
+			})
+		})
+
+		Describe("the specified elastic load balancer is not existed", func() {
+			testLoadBalancerName := "testelb"
+
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("ElasticLoadBalancerName")).Should(Equal(testLoadBalancerName))
+					Expect(r.Form.Get("ElasticLoadBalancerPort")).Should(Equal("80"))
+					Expect(r.Form.Get("InstancePort")).Should(Equal("30000"))
+					Expect(r.Form.Get("Protocol")).Should(Equal("TCP"))
+					w.WriteHeader(http.StatusInternalServerError)
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/delete_elastic_load_balancer_not_found_load_balancer.xml")))
+				})
+			})
+
+			It("return error", func() {
+				ctx := context.Background()
+				testElasticLoadBalancers := helper.NewTestElasticLoadBalancer(testLoadBalancerName)
+				gotErr := testNifcloudAPIClient.DeleteElasticLoadBalancer(ctx, &testElasticLoadBalancers[0])
+				Expect(gotErr).Should(HaveOccurred())
+			})
+		})
+	})
 })

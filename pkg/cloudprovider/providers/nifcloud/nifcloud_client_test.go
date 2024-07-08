@@ -1530,4 +1530,66 @@ var _ = Describe("nifcloudAPIClient", func() {
 			})
 		})
 	})
+
+	var _ = Describe("RevokeSecurityGroupIngress", func() {
+		securityGroupName := "testgroup"
+
+		Describe("revoking the security group is success", func() {
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("GroupName")).Should(Equal(securityGroupName))
+					Expect(r.Form.Get("IpPermissions.1.IpProtocol")).Should(Equal("TCP"))
+					Expect(r.Form.Get("IpPermissions.1.FromPort")).Should(Equal("30000"))
+					Expect(r.Form.Get("IpPermissions.1.ToPort")).Should(Equal(""))
+					Expect(r.Form.Get("IpPermissions.1.InOut")).Should(Equal("IN"))
+					Expect(r.Form.Get("IpPermissions.1.IpRanges.1.CidrIp")).Should(Equal("192.168.0.10"))
+					
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/revoke_security_group_ingress.xml")))
+				})
+			})
+
+			It("return nil", func() {
+				ctx := context.Background()
+				testRule := nifcloud.SecurityGroupRule{
+					IpProtocol: "TCP",
+					FromPort: 30000,
+					ToPort: 30000,
+					InOut: "IN",
+					IpRanges: []string{"192.168.0.10"},
+				}
+				gotErr := testNifcloudAPIClient.RevokeSecurityGroupIngress(ctx, securityGroupName, &testRule)
+				Expect(gotErr).ShouldNot(HaveOccurred())
+			})
+		})
+
+		Describe("the specified security group is not existed", func() {
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("GroupName")).Should(Equal(securityGroupName))
+					Expect(r.Form.Get("IpPermissions.1.IpProtocol")).Should(Equal("TCP"))
+					Expect(r.Form.Get("IpPermissions.1.FromPort")).Should(Equal("30000"))
+					Expect(r.Form.Get("IpPermissions.1.ToPort")).Should(Equal(""))
+					Expect(r.Form.Get("IpPermissions.1.InOut")).Should(Equal("IN"))
+					Expect(r.Form.Get("IpPermissions.1.IpRanges.1.CidrIp")).Should(Equal("192.168.0.10"))
+					
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/revoke_security_group_ingress_not_found_security_group.xml")))
+				})
+			})
+
+			It("return error", func() {
+				ctx := context.Background()
+				testRule := nifcloud.SecurityGroupRule{
+					IpProtocol: "TCP",
+					FromPort: 30000,
+					ToPort: 30000,
+					InOut: "IN",
+					IpRanges: []string{"192.168.0.10"},
+				}
+				gotErr := testNifcloudAPIClient.RevokeSecurityGroupIngress(ctx, securityGroupName, &testRule)
+				Expect(gotErr).Should(HaveOccurred())
+			})
+		})
+	})
 })

@@ -843,6 +843,7 @@ func (c *nifcloudAPIClient) DeregisterInstancesFromElasticLoadBalancer(ctx conte
 		ElasticLoadBalancerName: nifcloud.String(elasticLoadBalancer.Name),
 		ElasticLoadBalancerPort: nifcloud.Int32(elasticLoadBalancer.LoadBalancerPort),
 		InstancePort:            nifcloud.Int32(elasticLoadBalancer.InstancePort),
+		Protocol:                types.ProtocolOfNiftyDeregisterInstancesFromElasticLoadBalancerRequest(elasticLoadBalancer.Protocol),
 		Instances: &types.ListOfRequestInstancesOfNiftyDeregisterInstancesFromElasticLoadBalancer{
 			Member: deregisterInstances,
 		},

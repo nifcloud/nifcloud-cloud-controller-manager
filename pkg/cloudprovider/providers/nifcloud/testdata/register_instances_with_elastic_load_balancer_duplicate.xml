@@ -1,0 +1,1 @@
+<Response><Errors><Error><Code>Client.Inoperable.ElasticLoadBalancer.HavingRegisteredInstance</Code><Message>The Instances_member_InstanceId 'testinstance' already exists with this ElasticLoadBalancer.</Message></Error></Errors><RequestID>4c0a1c3a-5856-4fe1-ab4b-8d8f1653fceb</RequestID></Response>

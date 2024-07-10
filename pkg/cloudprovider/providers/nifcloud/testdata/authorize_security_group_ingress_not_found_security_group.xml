@@ -1,0 +1,1 @@
+<Response><Errors><Error><Code>Client.InvalidParameterNotFound.SecurityGroup</Code><Message>The groupName 'testgroup' does not exist.</Message></Error></Errors><RequestID>3a883e9a-cb14-47a3-8110-bc66309c7ac4</RequestID></Response>

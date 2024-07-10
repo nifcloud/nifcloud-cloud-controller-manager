@@ -1285,4 +1285,311 @@ var _ = Describe("nifcloudAPIClient", func() {
 			})
 		})
 	})
+
+	var _ = Describe("DescribeSecurityGroups", func() {
+		Describe("some security groups are existed", func() {
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/describe_security_groups.xml")))
+				})
+			})
+
+			It("return the security groups", func() {
+				ctx := context.Background()
+				expectedSecurityGroups := []nifcloud.SecurityGroup{
+					{
+						GroupName: "testgroup",
+						Rules: []nifcloud.SecurityGroupRule{
+							{
+								IpProtocol: "TCP",
+								FromPort: 30000,
+								ToPort: 31000,
+								InOut: "IN",
+								Groups: []string{},
+								IpRanges: []string{"192.168.0.0/16"},
+							},
+							{
+								IpProtocol: "TCP",
+								FromPort: 80,
+								ToPort: 80,
+								InOut: "IN",
+								Groups: []string{},
+								IpRanges: []string{"192.168.0.10"},
+							},
+						},
+					},
+					{
+						GroupName: "testgroup2",
+						Rules: []nifcloud.SecurityGroupRule{
+							{
+								IpProtocol: "TCP",
+								FromPort: 443,
+								ToPort: 443,
+								InOut: "IN",
+								Groups: []string{"testgroup3"},
+								IpRanges: []string{},
+							},
+							{
+								IpProtocol: "ICMP",
+								InOut: "IN",
+								Groups: []string{},
+								IpRanges: []string{"192.168.0.20"},
+							},
+						},
+					},
+					{
+						GroupName: "testgroup3",
+						Rules: []nifcloud.SecurityGroupRule{},
+					},
+				}
+				gotSecurityGroups, gotErr := testNifcloudAPIClient.DescribeSecurityGroups(ctx)
+				Expect(gotErr).ShouldNot(HaveOccurred())
+				Expect(gotSecurityGroups).Should(Equal(expectedSecurityGroups))
+			})
+		})
+	})
+
+	var _ = Describe("DescribeSecurityGroupsByInstanceIDs", func() {
+		Describe("only one instanceID is given", func() {
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/describe_security_groups.xml")))
+				})
+			})
+
+			It("return the security group that links specified instance", func() {
+				ctx := context.Background()
+				instanceIDs := []string{"testinstance"}
+				expectedSecurityGroups := []nifcloud.SecurityGroup{
+					{
+						GroupName: "testgroup",
+						Rules: []nifcloud.SecurityGroupRule{
+							{
+								IpProtocol: "TCP",
+								FromPort: 30000,
+								ToPort: 31000,
+								InOut: "IN",
+								Groups: []string{},
+								IpRanges: []string{"192.168.0.0/16"},
+							},
+							{
+								IpProtocol: "TCP",
+								FromPort: 80,
+								ToPort: 80,
+								InOut: "IN",
+								Groups: []string{},
+								IpRanges: []string{"192.168.0.10"},
+							},
+						},
+					},
+				}
+				gotSecurityGroups, gotErr := testNifcloudAPIClient.DescribeSecurityGroupsByInstanceIDs(ctx, instanceIDs)
+				Expect(gotErr).ShouldNot(HaveOccurred())
+				Expect(gotSecurityGroups).Should(Equal(expectedSecurityGroups))
+			})
+		})
+
+		Describe("some instanceIDs are given", func() {
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/describe_security_groups.xml")))
+				})
+			})
+
+			It("return the security group that links specified instances", func() {
+				ctx := context.Background()
+				instanceIDs := []string{"testinstance", "testinstance2"}
+				expectedSecurityGroups := []nifcloud.SecurityGroup{
+					{
+						GroupName: "testgroup",
+						Rules: []nifcloud.SecurityGroupRule{
+							{
+								IpProtocol: "TCP",
+								FromPort: 30000,
+								ToPort: 31000,
+								InOut: "IN",
+								Groups: []string{},
+								IpRanges: []string{"192.168.0.0/16"},
+							},
+							{
+								IpProtocol: "TCP",
+								FromPort: 80,
+								ToPort: 80,
+								InOut: "IN",
+								Groups: []string{},
+								IpRanges: []string{"192.168.0.10"},
+							},
+						},
+					},
+					{
+						GroupName: "testgroup2",
+						Rules: []nifcloud.SecurityGroupRule{
+							{
+								IpProtocol: "TCP",
+								FromPort: 443,
+								ToPort: 443,
+								InOut: "IN",
+								Groups: []string{"testgroup3"},
+								IpRanges: []string{},
+							},
+							{
+								IpProtocol: "ICMP",
+								InOut: "IN",
+								Groups: []string{},
+								IpRanges: []string{"192.168.0.20"},
+							},
+						},
+					},
+				}
+				gotSecurityGroups, gotErr := testNifcloudAPIClient.DescribeSecurityGroupsByInstanceIDs(ctx, instanceIDs)
+				Expect(gotErr).ShouldNot(HaveOccurred())
+				Expect(gotSecurityGroups).Should(Equal(expectedSecurityGroups))
+			})
+		})
+
+		Describe("given instanceID is not linked any security groups", func() {
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/describe_security_groups.xml")))
+				})
+			})
+
+			It("return the security group  that links specified instances", func() {
+				ctx := context.Background()
+				instanceIDs := []string{"testinstance4"}
+				expectedSecurityGroups := []nifcloud.SecurityGroup{}
+				gotSecurityGroups, gotErr := testNifcloudAPIClient.DescribeSecurityGroupsByInstanceIDs(ctx, instanceIDs)
+				Expect(gotErr).ShouldNot(HaveOccurred())
+				Expect(gotSecurityGroups).Should(Equal(expectedSecurityGroups))
+			})
+		})
+	})
+
+	var _ = Describe("AuthorizeSecurityGroupIngress", func() {
+		securityGroupName := "testgroup"
+
+		Describe("authorizing the security group is success", func() {
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("GroupName")).Should(Equal(securityGroupName))
+					Expect(r.Form.Get("IpPermissions.1.IpProtocol")).Should(Equal("TCP"))
+					Expect(r.Form.Get("IpPermissions.1.FromPort")).Should(Equal("30000"))
+					Expect(r.Form.Get("IpPermissions.1.ToPort")).Should(Equal(""))
+					Expect(r.Form.Get("IpPermissions.1.InOut")).Should(Equal("IN"))
+					Expect(r.Form.Get("IpPermissions.1.IpRanges.1.CidrIp")).Should(Equal("192.168.0.10"))
+					
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/authorize_security_group_ingress.xml")))
+				})
+			})
+
+			It("return nil", func() {
+				ctx := context.Background()
+				testRule := nifcloud.SecurityGroupRule{
+					IpProtocol: "TCP",
+					FromPort: 30000,
+					ToPort: 30000,
+					InOut: "IN",
+					IpRanges: []string{"192.168.0.10"},
+				}
+				gotErr := testNifcloudAPIClient.AuthorizeSecurityGroupIngress(ctx, securityGroupName, &testRule)
+				Expect(gotErr).ShouldNot(HaveOccurred())
+			})
+		})
+
+		Describe("the specified security group is not existed", func() {
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("GroupName")).Should(Equal(securityGroupName))
+					Expect(r.Form.Get("IpPermissions.1.IpProtocol")).Should(Equal("TCP"))
+					Expect(r.Form.Get("IpPermissions.1.FromPort")).Should(Equal("30000"))
+					Expect(r.Form.Get("IpPermissions.1.ToPort")).Should(Equal(""))
+					Expect(r.Form.Get("IpPermissions.1.InOut")).Should(Equal("IN"))
+					Expect(r.Form.Get("IpPermissions.1.IpRanges.1.CidrIp")).Should(Equal("192.168.0.10"))
+					
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/authorize_security_group_ingress_not_found_security_group.xml")))
+				})
+			})
+
+			It("return error", func() {
+				ctx := context.Background()
+				testRule := nifcloud.SecurityGroupRule{
+					IpProtocol: "TCP",
+					FromPort: 30000,
+					ToPort: 30000,
+					InOut: "IN",
+					IpRanges: []string{"192.168.0.10"},
+				}
+				gotErr := testNifcloudAPIClient.AuthorizeSecurityGroupIngress(ctx, securityGroupName, &testRule)
+				Expect(gotErr).Should(HaveOccurred())
+			})
+		})
+	})
+
+	var _ = Describe("RevokeSecurityGroupIngress", func() {
+		securityGroupName := "testgroup"
+
+		Describe("revoking the security group is success", func() {
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("GroupName")).Should(Equal(securityGroupName))
+					Expect(r.Form.Get("IpPermissions.1.IpProtocol")).Should(Equal("TCP"))
+					Expect(r.Form.Get("IpPermissions.1.FromPort")).Should(Equal("30000"))
+					Expect(r.Form.Get("IpPermissions.1.ToPort")).Should(Equal(""))
+					Expect(r.Form.Get("IpPermissions.1.InOut")).Should(Equal("IN"))
+					Expect(r.Form.Get("IpPermissions.1.IpRanges.1.CidrIp")).Should(Equal("192.168.0.10"))
+					
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/revoke_security_group_ingress.xml")))
+				})
+			})
+
+			It("return nil", func() {
+				ctx := context.Background()
+				testRule := nifcloud.SecurityGroupRule{
+					IpProtocol: "TCP",
+					FromPort: 30000,
+					ToPort: 30000,
+					InOut: "IN",
+					IpRanges: []string{"192.168.0.10"},
+				}
+				gotErr := testNifcloudAPIClient.RevokeSecurityGroupIngress(ctx, securityGroupName, &testRule)
+				Expect(gotErr).ShouldNot(HaveOccurred())
+			})
+		})
+
+		Describe("the specified security group is not existed", func() {
+			BeforeEach(func() {
+				handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lo.Must0(r.ParseForm())
+					Expect(r.Form.Get("GroupName")).Should(Equal(securityGroupName))
+					Expect(r.Form.Get("IpPermissions.1.IpProtocol")).Should(Equal("TCP"))
+					Expect(r.Form.Get("IpPermissions.1.FromPort")).Should(Equal("30000"))
+					Expect(r.Form.Get("IpPermissions.1.ToPort")).Should(Equal(""))
+					Expect(r.Form.Get("IpPermissions.1.InOut")).Should(Equal("IN"))
+					Expect(r.Form.Get("IpPermissions.1.IpRanges.1.CidrIp")).Should(Equal("192.168.0.10"))
+					
+					_, _ = w.Write(lo.Must(os.ReadFile("./testdata/revoke_security_group_ingress_not_found_security_group.xml")))
+				})
+			})
+
+			It("return error", func() {
+				ctx := context.Background()
+				testRule := nifcloud.SecurityGroupRule{
+					IpProtocol: "TCP",
+					FromPort: 30000,
+					ToPort: 30000,
+					InOut: "IN",
+					IpRanges: []string{"192.168.0.10"},
+				}
+				gotErr := testNifcloudAPIClient.RevokeSecurityGroupIngress(ctx, securityGroupName, &testRule)
+				Expect(gotErr).Should(HaveOccurred())
+			})
+		})
+	})
 })

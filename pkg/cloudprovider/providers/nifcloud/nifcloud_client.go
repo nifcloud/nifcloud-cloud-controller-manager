@@ -102,6 +102,7 @@ type SecurityGroupRule struct {
 	FromPort   int32
 	ToPort     int32
 	InOut      string
+	Groups     []string
 	IpRanges   []string
 }
 
@@ -135,6 +136,9 @@ func (lb *ElasticLoadBalancer) String() string {
 }
 
 func (r *SecurityGroupRule) String() string {
+	if len(r.Groups) > 0 {
+		return fmt.Sprintf("%s %s [%d-%d] : %s", r.InOut, r.IpProtocol, r.FromPort, r.ToPort, r.Groups)
+	}
 	return fmt.Sprintf("%s %s [%d-%d] : %s", r.InOut, r.IpProtocol, r.FromPort, r.ToPort, r.IpRanges)
 }
 
@@ -878,7 +882,11 @@ func (c *nifcloudAPIClient) DescribeSecurityGroups(ctx context.Context) ([]Secur
 	for _, rs := range res.SecurityGroupInfo {
 		securityGroupRules := []SecurityGroupRule{}
 		for _, rule := range rs.IpPermissions {
+			groups := []string{}
 			ipRanges := []string{}
+			for _, group := range rule.Groups {
+				groups = append(groups, nifcloud.ToString(group.GroupName))
+			}
 			for _, ipRange := range rule.IpRanges {
 				ipRanges = append(ipRanges, nifcloud.ToString(ipRange.CidrIp))
 			}
@@ -887,6 +895,7 @@ func (c *nifcloudAPIClient) DescribeSecurityGroups(ctx context.Context) ([]Secur
 				FromPort:   nifcloud.ToInt32(rule.FromPort),
 				ToPort:     nifcloud.ToInt32(rule.ToPort),
 				InOut:      nifcloud.ToString(rule.InOut),
+				Groups:     groups,
 				IpRanges:   ipRanges,
 			})
 		}
@@ -919,7 +928,11 @@ func (c *nifcloudAPIClient) DescribeSecurityGroupsByInstanceIDs(ctx context.Cont
 
 		securityGroupRules := []SecurityGroupRule{}
 		for _, rule := range rs.IpPermissions {
+			groups := []string{}
 			ipRanges := []string{}
+			for _, group := range rule.Groups {
+				groups = append(groups, nifcloud.ToString(group.GroupName))
+			}
 			for _, ipRange := range rule.IpRanges {
 				ipRanges = append(ipRanges, nifcloud.ToString(ipRange.CidrIp))
 			}
@@ -928,6 +941,7 @@ func (c *nifcloudAPIClient) DescribeSecurityGroupsByInstanceIDs(ctx context.Cont
 				FromPort:   nifcloud.ToInt32(rule.FromPort),
 				ToPort:     nifcloud.ToInt32(rule.ToPort),
 				InOut:      nifcloud.ToString(rule.InOut),
+				Groups:     groups,
 				IpRanges:   ipRanges,
 			})
 		}

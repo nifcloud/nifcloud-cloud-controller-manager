@@ -1,6 +1,6 @@
 # nifcloud-cloud-controller-manager
 
-**nifcloud-cloud-controller-manager** is the [Kubernetes Cloud Controller Manager (CCM)](https://kubernetes.io/docs/tasks/administer-cluster/running-cloud-controller/) implementation for [NIFCLOUD](https://pfs.nifcloud.com/) (**UNOFFICIAL**).
+**nifcloud-cloud-controller-manager** is the [Kubernetes Cloud Controller Manager (CCM)](https://kubernetes.io/docs/tasks/administer-cluster/running-cloud-controller/) implementation for [NIFCLOUD](https://pfs.nifcloud.com/).
 
 ## Features
 
